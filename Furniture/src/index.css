@@ -1,0 +1,11 @@
+.light-brown-btn {
+    background-color: #a67c52;
+    border-color: #a67c52;
+    color: white;
+  }
+  
+  .light-brown-btn:hover {
+    background-color: #8d6e4a;
+    border-color: #8d6e4a;
+    color: white;
+  }
