@@ -15,10 +15,10 @@ function Login() {
   });
 
   const [signupData, setSignupData] = useState({
-    fullname: "Nirali",
-    email: "akbarinirali27@gmail.com",
-    password: "Nirali@2717",
-    confirmPassword: "Nirali@2717",
+    fullname: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
 
   // Validation states
