@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useSearchParams } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 const AddProduct = () => {
     const [formData, setFormData] = useState({
@@ -96,15 +97,20 @@ const AddProduct = () => {
 
           
 
-        try {
+          try {
             const response = await fetch("http://localhost:5000/api/Product/add-product", {
                 method: "POST",
                 body: formDataToSend,
             });
-
+        
             const data = await response.json();
             if (response.ok) {
-                toast.success(data.message);
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message || 'Product added successfully.',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
                 setFormData({
                     name: "",
                     category: "",
@@ -116,11 +122,25 @@ const AddProduct = () => {
                     productImage: null,
                 });
             } else {
-                toast.error(data.error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: data.error || 'Something went wrong.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
             }
         } catch (error) {
-            toast.error("Something went wrong. Please try again.");
+            Swal.fire({
+                title: 'Error!',
+                text: "Something went wrong. Please try again.",
+                icon: 'error',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                navigate("/admin/products");
+            
+            });
         }
+        
     };
 
     return (

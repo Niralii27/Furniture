@@ -1,13 +1,14 @@
 import { useSearchParams } from 'react-router-dom';
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import Swal from 'sweetalert2';
+
 
 const UpdateProduct = () => {
-    // const { productId } = useParams();
-    
-    const [searchParams, setSearchParams] = useSearchParams();
+    const [searchParams] = useSearchParams();
     const productId = searchParams.get('product_id');
+
     const [productData, setProductData] = useState({
         name: "",
         category: "",
@@ -16,12 +17,13 @@ const UpdateProduct = () => {
         discount: "",
         stockQuantity: "",
         description: "",
-        productImage: "", // Store the uploaded image URL or file
+        productImage: "",
     });
 
-    const [preview, setPreview] = useState(null); // To preview the selected image
+    const [preview, setPreview] = useState(null);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [errors, setErrors] = useState({});
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -43,20 +45,55 @@ const UpdateProduct = () => {
         }
     }, [productId]);
 
+    const validateField = (name, value) => {
+        if (!value && typeof value === "string") return "This field is required.";
+        if (name === "name" && (value.length < 3 || /^\d+$/.test(value))) {
+            return "Product name must be at least 3 characters and not be a number.";
+        }
+        if (["costPrice", "salePrice", "discount", "stockQuantity"].includes(name)) {
+            if (isNaN(value) || value < 0) return "Enter a valid non-negative number.";
+        }
+        if (name === "discount" && (value < 1 || value > 100)) {
+            return "Discount must be between 1% and 100%.";
+        }
+        if (name === "salePrice" && parseFloat(value) < parseFloat(productData.costPrice)) {
+            return "Sale price can't be less than cost price.";
+        }
+        if (name === "stockQuantity" && !Number.isInteger(Number(value))) {
+            return "Stock quantity must be an integer.";
+        }
+        return null;
+    };
+
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setProductData((prevData) => ({
-                ...prevData,
-                productImage: file, // Store the file in state
-            }));
-            setPreview(URL.createObjectURL(file)); // Generate preview URL
+            setProductData((prev) => ({ ...prev, productImage: file }));
+            setPreview(URL.createObjectURL(file));
         }
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setProductData((prev) => ({ ...prev, [name]: value }));
+
+        const error = validateField(name, value);
+        setErrors((prevErrors) => ({ ...prevErrors, [name]: error }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setSubmitting(true);
+
+        const formErrors = {};
+        for (let key in productData) {
+            const error = validateField(key, productData[key]);
+            if (error) formErrors[key] = error;
+        }
+
+        if (Object.keys(formErrors).length > 0) {
+            setErrors(formErrors);
+            return;
+        }
 
         const formData = new FormData();
         formData.append("name", productData.name);
@@ -72,150 +109,115 @@ const UpdateProduct = () => {
         }
 
         try {
+            setSubmitting(true);
             await axios.put(`http://localhost:5000/api/Product/update-product/${productId}`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
-            alert("Product updated successfully!");
-            navigate("/admin/products");
+        
+            Swal.fire({
+                title: 'Success!',
+                text: 'Product updated successfully!',
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                navigate("/admin/products");
+            });
         } catch (error) {
-            alert("Failed to update product");
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to update product.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
             console.error("Error updating product:", error);
         } finally {
             setSubmitting(false);
         }
-    };
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setProductData((prevData) => ({
-            ...prevData,
-            [name]: value,
-        }));
+        
     };
 
     return (
-        <div className="form-container">
-            <h2>Edit Product</h2>
-            {loading ? (
-                <p>Loading product data...</p>
-            ) : (
-                <form onSubmit={handleSubmit} encType="multipart/form-data">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block mb-2 text-sm text-amber-800">Product Name</label>
-                            <input
-                                type="text"
-                                name="name"
-                                className="w-full px-4 py-2 border rounded-md border-amber-800 focus:ring-blue-500"
-                                onChange={handleChange}
-                                value={productData.name}
-                            />
-                        </div>
+        <div>
+            <h1 className="mt-4">Update Product</h1>
+            <ol className="breadcrumb mb-4">
+                <li className="breadcrumb-item"><Link to="/admin">Dashboard</Link></li>
+                <li className="breadcrumb-item active">Update Product</li>
+            </ol>
 
-                        <div>
-                            <label className="block mb-2 text-sm text-amber-800">Category</label>
-                            <select
-                                name="category"
-                                className="w-full px-4 py-2 border rounded-md border-amber-800 focus:ring-blue-500"
-                                onChange={handleChange}
-                                value={productData.category}
-                            >
-                                <option value="">Select Category</option>
-                                <option value="Chair">Chair</option>
-                                <option value="Table">Table</option>
-                                <option value="Sofa">Sofa</option>
-                                <option value="Bed">Bed</option>
-                                <option value="Cabinet">Cabinet</option>
-                            </select>
-                        </div>
+            {loading ? <p>Loading...</p> : (
+                <div className="card mb-4">
+                    <div className="card-body">
+                        <form onSubmit={handleSubmit} encType="multipart/form-data">
+                            <div className="row">
+                                <div className="col-md-6 mb-3">
+                                    <label className="form-label">Product Name</label>
+                                    <input type="text" className="form-control" name="name" value={productData.name} onChange={handleChange} />
+                                    {errors.name && <small className="text-danger">{errors.name}</small>}
+                                </div>
+                                <div className="col-md-6 mb-3">
+                                    <label className="form-label">Discount (%)</label>
+                                    <input type="number" className="form-control" name="discount" value={productData.discount} onChange={handleChange} />
+                                    {errors.discount && <small className="text-danger">{errors.discount}</small>}
+                                </div>
+                            </div>
 
-                        <div>
-                            <label className="block mb-2 text-sm text-amber-800">Cost Price</label>
-                            <input
-                                type="number"
-                                name="costPrice"
-                                className="w-full px-4 py-2 border rounded-md border-amber-800 focus:ring-blue-500"
-                                onChange={handleChange}
-                                value={productData.costPrice}
-                            />
-                        </div>
+                            <div className="row">
+                                <div className="col-md-6 mb-3">
+                                    <label className="form-label">Cost Price</label>
+                                    <input type="number" className="form-control" name="costPrice" value={productData.costPrice} onChange={handleChange} />
+                                    {errors.costPrice && <small className="text-danger">{errors.costPrice}</small>}
+                                </div>
+                                <div className="col-md-6 mb-3">
+                                    <label className="form-label">Sale Price</label>
+                                    <input type="number" className="form-control" name="salePrice" value={productData.salePrice} onChange={handleChange} />
+                                    {errors.salePrice && <small className="text-danger">{errors.salePrice}</small>}
+                                </div>
+                            </div>
 
-                        <div>
-                            <label className="block mb-2 text-sm text-amber-800">Sale Price</label>
-                            <input
-                                type="number"
-                                name="salePrice"
-                                className="w-full px-4 py-2 border rounded-md border-amber-800 focus:ring-blue-500"
-                                onChange={handleChange}
-                                value={productData.salePrice}
-                            />
-                        </div>
+                            <div className="row">
+                                <div className="col-md-6 mb-3">
+                                    <label className="form-label">Stock Quantity</label>
+                                    <input type="number" className="form-control" name="stockQuantity" value={productData.stockQuantity} onChange={handleChange} />
+                                    {errors.stockQuantity && <small className="text-danger">{errors.stockQuantity}</small>}
+                                </div>
+                                <div className="col-md-6 mb-3">
+                                    <label className="form-label">Category</label>
+                                    <select className="form-select" name="category" value={productData.category} onChange={handleChange}>
+                                        <option value="">Select a category</option>
+                                        <option value="Chair">Chair</option>
+                                        <option value="Table">Table</option>
+                                        <option value="Sofa">Sofa</option>
+                                        <option value="Bed">Bed</option>
+                                        <option value="Cabinet">Cabinet</option>
+                                    </select>
+                                    {errors.category && <small className="text-danger">{errors.category}</small>}
+                                </div>
+                            </div>
 
-                        <div>
-                            <label className="block mb-2 text-sm text-amber-800">Discount (%)</label>
-                            <input
-                                type="number"
-                                name="discount"
-                                className="w-full px-4 py-2 border rounded-md border-amber-800 focus:ring-blue-500"
-                                onChange={handleChange}
-                                value={productData.discount}
-                            />
-                        </div>
+                            <div className="mb-3">
+                                <label className="form-label">Description</label>
+                                <textarea className="form-control" name="description" value={productData.description} onChange={handleChange} rows="4"></textarea>
+                                {errors.description && <small className="text-danger">{errors.description}</small>}
+                            </div>
 
-                        <div>
-                            <label className="block mb-2 text-sm text-amber-800">Stock Quantity</label>
-                            <input
-                                type="number"
-                                name="stockQuantity"
-                                className="w-full px-4 py-2 border rounded-md border-amber-800 focus:ring-blue-500"
-                                onChange={handleChange}
-                                value={productData.stockQuantity}
-                            />
-                        </div>
+                            <div className="mb-3">
+                                <label className="form-label">Product Image</label>
+                                <input type="file" className="form-control" name="productImage" onChange={handleFileChange} />
+                                {preview && (
+                                    <img src={preview} alt="Preview" className="mt-2" style={{ width: '100px', height: '100px', objectFit: 'cover', border: '1px solid #ccc' }} />
+                                )}
+                                {errors.productImage && <div className="text-danger">{errors.productImage}</div>}
+                            </div>
 
-                        {/* Product Image Upload */}
-                        <div>
-                            <label className="block mb-2 text-sm text-amber-800">Product Image</label>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                className="w-full px-4 py-2 border rounded-md border-amber-800 focus:ring-blue-500"
-                                onChange={handleFileChange}
-                            />
-                            {preview && (
-                                <img src={preview} alt="Preview" className="mt-2 w-32 h-32 border object-cover" />
-                            )}
-                        </div>
-
-                        {/* Description field - using full width */}
+                            <button type="submit" className="btn btn-primary" disabled={submitting}>
+                                {submitting ? "Updating..." : "Update Product"}
+                            </button>
+                            <button type="button" className="btn btn-secondary ms-2" onClick={() => navigate("/admin/products")}>
+                                Cancel
+                            </button>
+                        </form>
                     </div>
-                    
-                    <div className="mt-4">
-                        <label className="block mb-2 text-sm text-amber-800">Description</label>
-                        <textarea
-                            name="description"
-                            rows="4"
-                            className="w-full px-4 py-2 border rounded-md border-amber-800 focus:ring-blue-500"
-                            onChange={handleChange}
-                            value={productData.description}
-                        ></textarea>
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={submitting}
-                        className="w-full mt-4 px-4 py-2 text-white bg-amber-800 rounded-md hover:bg-white hover:text-amber-800 border border-amber-800"
-                    >
-                        {submitting ? "Updating..." : "Update"}
-                    </button>
-                    <button 
-                        type="button" 
-                        onClick={() => navigate("/admin/products")} 
-                        className="w-full mt-2 px-4 py-2 text-amber-800 bg-white rounded-md hover:bg-amber-800 hover:text-white border border-amber-800"
-                    >
-                        Cancel
-                    </button>
-                </form>
+                </div>
             )}
         </div>
     );
