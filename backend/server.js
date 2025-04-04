@@ -23,9 +23,12 @@ mongoose
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((error) => console.error("❌ MongoDB Connection Error:", error));
 
+
 // Import Main Router (Ensure `routes/index.js` exists)
 const mainRouter = require("./routes/index.js");
+app.use(express.static("./public/uploads/")); // Serve static files from the public folder
 app.use("/api", mainRouter); // All routes will be prefixed with `/api`
+
 
 // Default Route
 app.use((req, res) => {

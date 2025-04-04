@@ -1,42 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
+import axios from "axios";
 
 const ProductList = () => {
-    const [products] = useState([
-        {
-            id: 1,
-            name: "Matrix Prime Sofa",
-            image: "https://sunnymate.co/wp-content/uploads/2024/12/1002-%E8%83%8C%E9%9D%A2%E5%9B%BE-600x600.jpg",
-            salePrice: 150,
-            discount: 5,
-            soldQuantity: 500,
-            stock: 100,
-            category: "Sofa"
-        },
-        {
-            id: 2,
-            name: "Apex Comfort Chair",
-            image: "https://sunnymate.co/wp-content/uploads/2024/12/%E6%B8%B8%E7%8C%8E%E6%A4%85E906E827%E8%BE%B9%E5%87%A0-600x450.webp",
-            salePrice: 80,
-            discount: 10,
-            soldQuantity: 300,
-            stock: 50,
-            category: "Chair"
-        },
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-        {
-            id: 2,
-            name: "Aether Comfort Leather Bed",
-            image: "https://sunnymate.co/wp-content/uploads/2024/12/01-600x600.jpg",
-            salePrice: 80000,
-            discount: 10,
-            soldQuantity: 35,
-            stock: 50,
-            category: "Bed"
-        }
+    useEffect(() => {
+        fetchProducts();
+    }, []);
 
-    ]);
+    const fetchProducts = () => {
+        axios.get("http://localhost:5000/api/Product/view-product")
+            .then((response) => {
+                setProducts(response.data);
+            })
+            .catch((error) => {
+                console.error("Error fetching products:", error);
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Failed to fetch products."
+                });
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    };
 
     const handleDelete = (productId) => {
         Swal.fire({
@@ -49,12 +40,23 @@ const ProductList = () => {
             confirmButtonText: "Yes, delete it!"
         }).then((result) => {
             if (result.isConfirmed) {
-                Swal.fire(
-                    "Deleted!",
-                    "The product has been deleted.",
-                    "success"
-                );
-                // Add deletion logic here
+                axios.delete(`http://localhost:5000/api/Product/delete-product/${productId}`)
+                    .then(() => {
+                        Swal.fire(
+                            "Deleted!",
+                            "The product has been deleted.",
+                            "success"
+                        );
+                        fetchProducts(); // Refresh the list after deletion
+                    })
+                    .catch((error) => {
+                        console.error("Error deleting product:", error);
+                        Swal.fire(
+                            "Error!",
+                            "Failed to delete the product.",
+                            "error"
+                        );
+                    });
             }
         });
     };
@@ -81,57 +83,62 @@ const ProductList = () => {
             </div>
             
             <div className="card-body">
-                <table className="table border text-nowrap">
+                {loading ? (
+                    <p>Loading products...</p>
+                ) : (
+                    <table className="table border text-nowrap">
                     <thead className="table-light">
                         <tr>
                             <th>Product</th>
-                            <th>Price</th>
-                            <th>Discount</th>
-                            <th>Sold Quantity</th>
-                            <th>Stock</th>
                             <th>Category</th>
+                            <th>Cost Price</th>
+                            <th>Sale Price</th>
+                            <th>Discount</th>
+                            <th>Stock Quantity</th>
+                            <th>Description</th>
+                            <th>Image</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {products.length > 0 ? (
                             products.map((product) => (
-                                <tr key={product.id}>
-                                    <td>
-                                        <img src={product.image} alt={product.name} style={{ width: 50, height: 50, objectFit: "cover" }} />
-                                        <span className="ms-2">{product.name}</span>
-                                    </td>
-                                    <td>₹{product.salePrice}</td>
-                                    <td>{product.discount}%</td>
-                                    <td>{product.soldQuantity}</td>
-                                    <td>{product.stock}</td>
+                                <tr key={product._id}>
+                                    <td>{product.name}</td>
                                     <td>{product.category}</td>
-                                   
-
+                                    <td>₹{product.costPrice}</td>
+                                    <td>₹{product.salePrice}</td>
+                                    <td>{product.discount || 0}%</td>
+                                    <td>{product.stockQuantity}</td>
+                                    <td style={{ maxWidth: '200px' }}>{product.description}</td>
+                                    <td>
+                                        <img 
+                                            src={product.productImage ? `http://127.0.0.1:5000/public/uploads/${product.productImage}` : "https://via.placeholder.com/50"} 
+                                            alt={product.name} 
+                                            style={{ width: 50, height: 50, objectFit: "cover" }} 
+                                        />
+                                    </td>
                                     <td>
                                         <div className="d-flex flex-nowrap">
-                                            {/* <Link className="text-info me-2" to={`/admin/view-product`}>
-                                                <i className="fas fa-eye"></i>
-                                            </Link> */}
-                                            <Link className="text-primary me-2" to={`/admin/update-product`}>
+                                            <Link className="text-primary me-2" to={`/admin/update-product?product_id=${product._id}`}>
                                                 <i className="fas fa-edit"></i>
                                             </Link>
-                                            <span className="text-danger" style={{ cursor: "pointer" }} onClick={() => handleDelete(product.id)}>
+                                            <span className="text-danger" style={{ cursor: "pointer" }} onClick={() => handleDelete(product._id)}>
                                                 <i className="fas fa-trash-alt"></i>
                                             </span>
                                         </div>
                                     </td>
-
-
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="7">There are no products to display!</td>
+                                <td colSpan="9">There are no products to display!</td>
                             </tr>
                         )}
                     </tbody>
                 </table>
+                
+                )}
             </div>
             <div className="d-flex justify-content-end">
                 <nav aria-label="Page navigation example">

@@ -41,6 +41,8 @@ router.post("/add-product", upload.single("productImage"), async (req, res) => {
     });
 
     await newProduct.save();
+    console.log("Product saved successfully:", newProduct);
+    
     res.status(201).json({ message: "Product added successfully", product: newProduct });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -48,21 +50,21 @@ router.post("/add-product", upload.single("productImage"), async (req, res) => {
 });
 
 // Get all products
-router.get("/Product", async (req, res) => {
+router.get("/view-product", async (req, res) => {
   try {
-    const Product = await Product.find();
-    res.status(200).json(Product);
+    const products = await Product.find();
+    res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
 // Get product by ID
-router.get("/product/:id", async (req, res) => {
+router.get("/view-product/:id", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ error: "Product not found" });
-    res.status(200).json(product);
+    const products = await Product.findById(req.params.id);
+    if (!products) return res.status(404).json({ error: "Product not found" });
+    res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
