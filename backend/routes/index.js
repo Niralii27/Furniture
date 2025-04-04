@@ -1,13 +1,18 @@
 const express = require("express");
 const router = express.Router();
 
+
+
 // Importing route files
 const loginRoutes = require("./loginRoutes"); // User-related routes
-// const contactRoutes = require("./contactRoutes"); // Contact inquiries
+const productRoutes = require("./AdminRoutes/productRoutes"); // Product routes
+
+
 
 // Use the routes
 router.use("/Login", loginRoutes);
-// router.use("/contacts", contactRoutes);
+router.use("/product", productRoutes);   
+
 
 // Handle 404 errors for unknown routes
 router.use((req, res) => {

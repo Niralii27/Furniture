@@ -4,13 +4,13 @@ import { toast } from "react-toastify";
 
 const AddProduct = () => {
     const [formData, setFormData] = useState({
-        productName: "",
-        productDiscount: "",
+        name: "",
+        category: "",
         costPrice: "",
         salePrice: "",
-        productStock: "",
-        productCategory: "",
-        productDescription: "",
+        discount: "",
+        stockQuantity: "",
+        description: "",
         productImage: null,
     });
 
@@ -38,15 +38,15 @@ const AddProduct = () => {
             return `${name.replace(/([A-Z])/g, ' $1').trim()} is required.`;
         }
 
-        if (name === "productName" && (value.length < 3 || /^\d+$/.test(value))) {
+        if (name === "name" && (value.length < 3 || /^\d+$/.test(value))) {
             return "Product name must be at least 3 characters long and not a number.";
         }
 
-        if (["productDiscount", "costPrice", "salePrice", "productStock"].includes(name) && (isNaN(value) || value < 0)) {
+        if (["discount", "costPrice", "salePrice", "stockQuantity"].includes(name) && (isNaN(value) || value < 0)) {
             return "Must be a valid non-negative number.";
         }
 
-        if (name === "productDiscount" && (value < 1 || value > 100)) {
+        if (name === "discount" && (value < 1 || value > 100)) {
             return "Discount must be between 1% and 100%.";
         }
 
@@ -54,7 +54,7 @@ const AddProduct = () => {
             return "Sale price cannot be less than cost price.";
         }
 
-        if (name === "productStock" && !Number.isInteger(Number(value))) {
+        if (name === "stockQuantity" && !Number.isInteger(Number(value))) {
             return "Stock quantity must be a whole number.";
         }
 
@@ -68,8 +68,9 @@ const AddProduct = () => {
         return null;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+
         const formErrors = {};
         Object.keys(formData).forEach((field) => {
             const error = validateField(field, formData[field]);
@@ -82,7 +83,43 @@ const AddProduct = () => {
         }
 
         setErrors({});
-        toast.success("Product added successfully!");
+
+        const formDataToSend = new FormData();
+        Object.keys(formData).forEach((key) => {
+            formDataToSend.append(key, formData[key]);
+        });
+
+        if (formData.profilePic) {
+            formDataToSend.append("uploads", formData.profilePic);
+          }
+
+          
+
+        try {
+            const response = await fetch("http://localhost:5000/api/Product/add-product", {
+                method: "POST",
+                body: formDataToSend,
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                toast.success(data.message);
+                setFormData({
+                    name: "",
+                    category: "",
+                    costPrice: "",
+                    salePrice: "",
+                    discount: "",
+                    stockQuantity: "",
+                    description: "",
+                    productImage: null,
+                });
+            } else {
+                toast.error(data.error);
+            }
+        } catch (error) {
+            toast.error("Something went wrong. Please try again.");
+        }
     };
 
     return (
@@ -103,18 +140,18 @@ const AddProduct = () => {
                         <div className="row">
                             <div className="col-md-6 mb-3">
                                 <label className="form-label">Product Name</label>
-                                <input type="text" className="form-control" name="productName" value={formData.productName} onChange={handleChange} placeholder="Enter product name" />
-                                {errors.productName && <p className="text-danger">{errors.productName}</p>}
+                                <input type="text" className="form-control" name="name" value={formData.name} onChange={handleChange} placeholder="Enter product name" />
+                                {errors.name && <p className="text-danger">{errors.name}</p>}
                             </div>
                             <div className="col-md-6 mb-3">
                                 <label className="form-label">Category</label>
-                                <select className="form-select" name="productCategory" value={formData.productCategory} onChange={handleChange}>
+                                <select className="form-select" name="category" value={formData.category} onChange={handleChange}>
                                     <option value="" disabled>Select a category</option>
                                     {categories.map((category) => (
                                         <option key={category.id} value={category.id}>{category.name}</option>
                                     ))}
                                 </select>
-                                {errors.productCategory && <p className="text-danger">{errors.productCategory}</p>}
+                                {errors.category && <p className="text-danger">{errors.category}</p>}
                             </div>
                         </div>
 
@@ -133,8 +170,8 @@ const AddProduct = () => {
                             </div>
                             <div className="col-md-4 mb-3">
                                 <label className="form-label">Discount (%)</label>
-                                <input type="number" className="form-control" name="productDiscount" value={formData.productDiscount} onChange={handleChange} placeholder="Enter discount" />
-                                {errors.productDiscount && <p className="text-danger">{errors.productDiscount}</p>}
+                                <input type="number" className="form-control" name="discount" value={formData.discount} onChange={handleChange} placeholder="Enter discount" />
+                                {errors.discount && <p className="text-danger">{errors.discount}</p>}
                             </div>
                         </div>
 
@@ -143,8 +180,8 @@ const AddProduct = () => {
                         <div className="row">
                             <div className="col-md-6 mb-3">
                                 <label className="form-label">Stock Quantity</label>
-                                <input type="number" className="form-control" name="productStock" value={formData.productStock} onChange={handleChange} placeholder="Enter stock quantity" />
-                                {errors.productStock && <p className="text-danger">{errors.productStock}</p>}
+                                <input type="number" className="form-control" name="stockQuantity" value={formData.stockQuantity} onChange={handleChange} placeholder="Enter stock quantity" />
+                                {errors.stockQuantity && <p className="text-danger">{errors.stockQuantity}</p>}
                             </div>
                             <div className="col-md-6 mb-3">
                                 <label className="form-label">Product Image</label>
@@ -154,8 +191,8 @@ const AddProduct = () => {
                         </div>
                         <div className="mb-3">
                             <label className="form-label">Description</label>
-                            <textarea className="form-control" name="productDescription" value={formData.productDescription} onChange={handleChange} rows="4" placeholder="Enter product description"></textarea>
-                            {errors.productDescription && <p className="text-danger">{errors.productDescription}</p>}
+                            <textarea className="form-control" name="description" value={formData.description} onChange={handleChange} rows="4" placeholder="Enter product description"></textarea>
+                            {errors.description && <p className="text-danger">{errors.description}</p>}
                         </div>
 
                         <button type="submit" className="btn btn-primary w-100">Add Product</button>
