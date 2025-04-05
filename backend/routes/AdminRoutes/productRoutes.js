@@ -1,7 +1,6 @@
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
-// const Product = require("../models/AdminModels/Product");
 const Product = require("../../models/AdminModels/Product");
 
 const router = express.Router();

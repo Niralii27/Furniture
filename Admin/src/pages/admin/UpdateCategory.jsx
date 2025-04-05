@@ -1,97 +1,92 @@
-import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
-import { toast } from "react-toastify";
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import Swal from 'sweetalert2';
 
 const UpdateCategory = () => {
-    const { id } = useParams();
-    const [formData, setFormData] = useState({
-        categoryName: "",
-    });
-    const [errors, setErrors] = useState({});
+    const [searchParams] = useSearchParams();
+    const categoryId = searchParams.get("category_id");
+    const [categoryName, setCategoryName] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState("");
+    const navigate = useNavigate();
 
     useEffect(() => {
-        // Fetch category details from API (Replace with actual API call)
-        console.log(`Fetching category with ID: ${id}`);
-        setFormData({ categoryName: "Sample Category" }); // Mock data
-    }, [id]);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-        
-        const error = validateField(name, value);
-        setErrors((prevErrors) => ({ ...prevErrors, [name]: error }));
-    };
-
-    const validateField = (name, value) => {
-        let error = null;
-        if (name === "categoryName") {
-            if (!value.trim()) {
-                error = "Category name is required.";
-            } else if (value.length < 3) {
-                error = "Category name must be at least 3 characters.";
-            } else if (value.length > 50) {
-                error = "Category name cannot exceed 50 characters.";
-            }
+        if (categoryId) {
+            axios.get(`http://localhost:5000/api/Category/view-category/${categoryId}`)
+                .then(res => {
+                    setCategoryName(res.data.name);
+                })
+                .catch(err => {
+                    console.error("Error fetching category:", err);
+                    Swal.fire("Error", "Failed to fetch category data", "error");
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
         }
-        return error;
-    };
+    }, [categoryId]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        const formErrors = {};
-        Object.keys(formData).forEach((field) => {
-            const error = validateField(field, formData[field]);
-            if (error) formErrors[field] = error;
-        });
-
-        if (Object.keys(formErrors).length > 0) {
-            setErrors(formErrors);
+        if (!categoryName.trim()) {
+            setError("Category name is required.");
             return;
         }
 
-        setErrors({});
-        toast.success("Category updated successfully!");
+        setSubmitting(true);
+        setError("");
+
+        try {
+            await axios.put(`http://localhost:5000/api/Category/update-category/${categoryId}`, {
+                name: categoryName.trim()
+            });
+
+            Swal.fire("Updated!", "Category updated successfully", "success").then(() => {
+                navigate("/admin/categories");
+            });
+        } catch (error) {
+            console.error("Update error:", error);
+            Swal.fire("Error", "Failed to update category", "error");
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
         <div>
             <h1 className="mt-4">Update Category</h1>
             <ol className="breadcrumb mb-4">
-                <li className="breadcrumb-item">
-                    <Link to="/admin">Dashboard</Link>
-                </li>
+                <li className="breadcrumb-item"><Link to="/admin">Dashboard</Link></li>
                 <li className="breadcrumb-item active">Update Category</li>
             </ol>
 
-            <div className="card mb-4">
-                <div className="card-body">
-                    <form onSubmit={handleSubmit}>
-                        <div className="row">
-                            <div className="col-md-6">
-                                <div className="mb-3">
-                                    <label htmlFor="categoryName" className="form-label">
-                                        Category Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        id="categoryName"
-                                        name="categoryName"
-                                        value={formData.categoryName}
-                                        onChange={handleChange}
-                                    />
-                                    {errors.categoryName && <div className="text-danger">{errors.categoryName}</div>}
-                                </div>
+            {loading ? <p>Loading...</p> : (
+                <div className="card mb-4">
+                    <div className="card-body">
+                        <form onSubmit={handleSubmit}>
+                            <div className="mb-3">
+                                <label className="form-label">Category Name</label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={categoryName}
+                                    onChange={(e) => setCategoryName(e.target.value)}
+                                />
+                                {error && <small className="text-danger">{error}</small>}
                             </div>
-                        </div>
-                        <button type="submit" className="btn btn-primary">
-                            Update Category
-                        </button>
-                    </form>
+
+                            <button type="submit" className="btn btn-primary" disabled={submitting}>
+                                {submitting ? "Updating..." : "Update Category"}
+                            </button>
+                            <button type="button" className="btn btn-secondary ms-2" onClick={() => navigate("/admin/categories")}>
+                                Cancel
+                            </button>
+                        </form>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

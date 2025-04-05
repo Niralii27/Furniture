@@ -6,12 +6,16 @@ const path = require("path");
 // Importing route files
 const loginRoutes = require("./loginRoutes"); // User-related routes
 const productRoutes = require("./AdminRoutes/productRoutes"); // Product routes
+const categoryRoutes = require("./AdminRoutes/categoryRoutes"); 
+
 
 router.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 // Use the routes
 router.use("/Login", loginRoutes);
 router.use("/product", productRoutes);   
+router.use("/category", categoryRoutes);   
+
 
 
 

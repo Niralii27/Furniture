@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useSearchParams } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { useNavigate } from "react-router-dom";  //Redirect Hook
+
 
 const AddProduct = () => {
+    
+    const navigate = useNavigate(); //redirect on other page
     const [formData, setFormData] = useState({
         name: "",
         category: "",
@@ -18,14 +22,34 @@ const AddProduct = () => {
 
     const [errors, setErrors] = useState({});
 
-    const categories = [
-        { id: "1", name: "Chair" },
-        { id: "2", name: "Table" },
-        { id: "3", name: "Flower Pot" },
-        { id: "4", name: "Bed" },
-        { id: "5", name: "Sofa" },
-    ];
-
+    // const categories = [
+    //     { id: "1", name: "Chair" },
+    //     { id: "2", name: "Table" },
+    //     { id: "3", name: "Flower Pot" },
+    //     { id: "4", name: "Bed" },
+    //     { id: "5", name: "Sofa" },
+    // ];
+    const [categories, setCategories] = useState([]);
+    
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await fetch("http://localhost:5000/api/Category/get-all");
+                const data = await res.json();
+                if (res.ok) {
+                    setCategories(data.categories); // ✅ Check if this key matches your backend response
+                } else {
+                    toast.error(data.message || "Failed to load categories");
+                }
+            } catch (error) {
+                toast.error("Error fetching categories");
+            }
+        };
+    
+        fetchCategories();
+    }, []);
+    
+    
     const handleChange = (e) => {
         const { name, value, type, files } = e.target;
         const newValue = type === "file" ? files[0] : value;
@@ -110,6 +134,9 @@ const AddProduct = () => {
                     text: data.message || 'Product added successfully.',
                     icon: 'success',
                     confirmButtonText: 'OK'
+                }).then(() => {
+                    navigate("/admin/products");
+                    
                 });
                 setFormData({
                     name: "",
@@ -169,9 +196,10 @@ const AddProduct = () => {
                                 <select className="form-select" name="category" value={formData.category} onChange={handleChange}>
                                     <option value="" disabled>Select a category</option>
                                     {categories.map((category) => (
-                                        <option key={category.id} value={category.id}>{category.name}</option>
+                                        <option key={category._id} value={category._id}>{category.name}</option>
                                     ))}
                                 </select>
+
                                 {errors.category && <p className="text-danger">{errors.category}</p>}
                             </div>
                         </div>
