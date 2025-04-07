@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from "axios";
 import contactimg from '../../images/contact.jpg';
 
 function ContactUs() {
@@ -93,6 +94,28 @@ function ContactUs() {
     }
   };
 
+
+//backend code for contact
+ const handlecontact = async (e) => {
+    console.log("nirali ", formData);
+    e.preventDefault();
+    
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/Contact/add-contact",
+        formData
+      );
+
+      console.log("Contact added:", response.data);
+      setSubmitSuccess(true); 
+      } catch (error) {
+      console.error("Error:", error.response?.data || error.message);
+      alert(error.response?.data?.message || "Your Contact Not Send!");
+    }
+  };
+
+
   return (
     <div className="contact-page">
       {/* Hero Section with Background Image */}
@@ -183,7 +206,8 @@ function ContactUs() {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={handlecontact} onChange={handleSubmit}
+              >
                 <div className="row">
                   <div className="col-md-6 mb-3">
                     <input 

@@ -1,0 +1,134 @@
+/* PureBiteHeader.css */
+
+/* Define light brown color theme */
+:root {
+    --brown-primary: #a67c52;
+    --brown-light: #c8b6a6;
+    --brown-dark: #8b6b43;
+    --brown-pale: #f5f0e8;
+  }
+  
+  /* Add custom brown classes */
+  .text-brown {
+    color: var(--brown-primary) !important;
+  }
+  
+  .bg-brown {
+    background-color: var(--brown-primary) !important;
+    color: white;
+  }
+  
+  .btn-brown {
+    background-color: var(--brown-primary);
+    color: white;
+  }
+  
+  .btn-brown:hover {
+    background-color: var(--brown-dark);
+    color: white;
+  }
+  
+  /* General Navbar Styling */
+  .navbar {
+    padding: 15px 0;
+    transition: all 0.3s ease;
+  }
+  
+  /* Active Link Animation */
+  .nav-link {
+    position: relative;
+    font-weight: 500;
+    transition: color 0.3s;
+  }
+  
+  .nav-link:hover {
+    color: var(--brown-primary) !important;
+  }
+  
+  .nav-link.active {
+    color: var(--brown-primary) !important;
+  }
+  
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--brown-primary);
+  }
+  
+  /* Search Bar Styling */
+  .search-form {
+    max-width: 300px;
+  }
+  
+  .search-input {
+    height: 40px;
+    padding-left: 15px;
+    padding-right: 40px;
+    background-color: #f8f9fa;
+  }
+  
+  .search-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(166, 124, 82, 0.25);
+    border-color: transparent;
+  }
+  
+  .search-button {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 40px;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* User Dropdown Styling */
+  .user-dropdown {
+    color: #6c757d;
+    padding: 0;
+    display: flex;
+    align-items: center;
+  }
+  
+  .user-dropdown:hover, 
+  .user-dropdown:focus {
+    color: var(--brown-primary);
+  }
+  
+  .user-dropdown::after {
+    margin-left: 0.5rem;
+  }
+  
+  /* Badge Styling */
+  /* .badge1 {
+    font-size: 0.65rem;
+    font-weight: 500;
+    min-width: 18px;
+    height: 18px;
+  } */
+  
+  /* Hover Effects for Icons */
+  .btn i.far, 
+  .btn i.fas {
+    transition: color 0.3s;
+  }
+  
+  .btn:hover i.far, 
+  .btn:hover i.fas {
+    color: var(--brown-primary) !important;
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 992px) {
+    .search-form {
+      margin: 15px 0;
+      max-width: 100%;
+    }
+  }

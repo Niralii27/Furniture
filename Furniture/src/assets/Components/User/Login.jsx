@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import "../../css/login.css"; // You'll need to create this CSS file
 import "../../js/login.js";
@@ -7,6 +8,11 @@ import "../../js/login.js";
 function Login() {
   // State to track which form is active
   const [isLoginActive, setIsLoginActive] = useState(true);
+
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
 
   // Form data states
   const [loginData, setLoginData] = useState({
@@ -146,7 +152,6 @@ function Login() {
     };
 
     // Username validation
-    // Username validation
     if (signupData.fullname.trim().length < 3) {
       newSignupErrors.fullname = "Username must be at least 3 characters long";
       hasErrors = true;
@@ -182,7 +187,43 @@ function Login() {
     }
   };
 
-  //backend code
+  //Backend code for Login
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    console.log("nirali akbari ", loginData);
+
+
+    try {
+      const { data } = await axios.post("http://localhost:5000/api/Login/login",{
+        email,
+        password,
+      }
+       
+      );
+
+       // Store user token and details
+       localStorage.setItem(`${data.user.role}token`, data.token);
+       localStorage.setItem(data.user.role, JSON.stringify(data.user));
+
+       setStatusMessage(data.message);
+       setStatusType(data.status);
+
+       setTimeout(() => {
+        navigate(data.user.role === "admin" ? "/admin-dashboard" : "/Home");
+      }, 2000);
+    } catch (error) {
+      setStatusMessage(error.response?.data?.message || "Invalid credentials. Please try again!");
+      setStatusType(error.response?.data?.status || "error");
+    } finally {
+      setLoading(false);
+    }
+  }; 
+
+  //veloraa1920 
+  //rtepefdygepi
+  
+  //backend code for registration
 
   const handleSubmit = async (e) => {
     console.log("nirali ", signupData);
@@ -196,10 +237,10 @@ function Login() {
       );
 
       console.log("User added:", response.data);
-      alert("User added successfully!");
+      alert("User added successfully. Check your email to verify your account.!");
     } catch (error) {
       console.error("Error:", error.response?.data || error.message);
-      alert(error.response?.data?.message || "Something went wrong!");
+      alert(error.response?.data?.message || "Your Email Address already registered !");
     }
   };
 
@@ -208,9 +249,9 @@ function Login() {
       <div className="form-wrapper">
         <div className="form-content">
           {/* Login Form */}
-          <form
+          <form onSubmit={handleLogin} id="login_form" 
             className={`form login-form ${isLoginActive ? "active" : ""}`}
-            onSubmit={handleLoginSubmit}
+            onChange={handleLoginSubmit}
           >
             <h2>Welcome Back!</h2>
             <p>Login to your account to continue</p>
@@ -218,6 +259,7 @@ function Login() {
               <input
                 type="email"
                 name="email"
+                id="email"
                 placeholder="Email"
                 value={loginData.email}
                 onChange={handleLoginChange}
@@ -232,6 +274,7 @@ function Login() {
               <input
                 type="password"
                 name="password"
+                id="password"
                 placeholder="Password"
                 value={loginData.password}
                 onChange={handleLoginChange}
@@ -260,7 +303,7 @@ function Login() {
             encType="multipart/form-data"
             onSubmit={handleSubmit}
             className={`form signup-form ${!isLoginActive ? "active" : ""}`}
-            onChange={handleSignupChange}
+            onChange={handleSignupSubmit}
           >
             <h2>Create Account</h2>
             <p>Sign up to explore new opportunities</p>

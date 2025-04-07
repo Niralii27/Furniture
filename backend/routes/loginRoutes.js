@@ -137,4 +137,44 @@ const transporter = nodemailer.createTransport({
     }
   });
 
+  // Login Route
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check if user exists
+    const user = await Login.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ status: "error", message: "Email is not registered!" });
+    }
+
+    // Verify password
+    if (password !== user.password) {
+      return res.status(400).json({ status: "error", message: "Incorrect password!" });
+    }
+
+    // Generate JWT Token
+    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: "1h", // Token expires in 1 hour
+    });
+
+    // Send token & user details
+    res.status(200).json({
+      message: "Login successful",
+      status: "success",
+      token,
+      user: {
+        id: user._id,
+        fullname: user.fullname,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("🔥 Backend Error:", error); // Yeh error terminal me show karega
+
+    res.status(500).json({ error: "Something went wrong." });
+  }
+});
+
 module.exports = router;

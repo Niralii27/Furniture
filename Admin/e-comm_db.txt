@@ -1,0 +1,11 @@
+// Product
+
+Product	
+Category
+CostPrice
+SalePrice
+Discount	
+Quantity
+Image
+Description	
+	
