@@ -108,8 +108,8 @@ const Responses = () => {
   <span
     className="text-danger"
     style={{ cursor: "pointer" }}
-    // onClick={() => handleDelete(response.id)}
-    onClick={() => handleDelete(response)}
+    onClick={() => handleDelete(response.id)}
+    // onClick={() => handleDelete(response)}
   >
     <i className="fas fa-trash-alt"></i>
   </span>

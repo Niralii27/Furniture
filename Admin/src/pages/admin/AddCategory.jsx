@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Swal from "sweetalert2";
 
+
 const AddCategory = () => {
     const navigate = useNavigate();
     const [name, setName] = useState("");

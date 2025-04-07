@@ -31,6 +31,7 @@ const AddProduct = () => {
     // ];
     const [categories, setCategories] = useState([]);
     
+    // for fatch category name
     useEffect(() => {
         const fetchCategories = async () => {
             try {

@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { useState,useEffect } from "react";
+import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useSearchParams } from 'react-router-dom';
+import Swal from 'sweetalert2';
+import { useNavigate } from "react-router-dom"; 
 
 const AddOrder = () => {
+    const navigate = useNavigate(); //redirect on other page
     const [formData, setFormData] = useState({
         userId: "",
         orderDate: "",
@@ -59,12 +63,41 @@ const AddOrder = () => {
     };
 
     // Submit Form
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+    
         if (validateForm()) {
-            toast.success("Order added successfully!");
+            try {
+                const response = await axios.post("http://localhost:5000/api/admin/add-order", formData);
+    
+                if (response.status === 201) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: response.data.message || 'Order added successfully.',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        navigate("/admin/orders"); // redirect after success
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: response.data.error || 'Something went wrong.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            } catch (error) {
+                Swal.fire({
+                    title: 'Error!',
+                    text: error.response?.data?.error || "Failed to add order. Please try again.",
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
         }
     };
+    
 
     return (
         <div className="container mt-4">

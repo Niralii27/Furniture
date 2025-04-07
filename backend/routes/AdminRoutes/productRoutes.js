@@ -99,6 +99,17 @@ router.delete("/delete-product/:id", async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+  
+});
+
+// GET all products
+router.get('/get-all', async (req, res) => {
+  try {
+    const products = await Product.find(); // Fetch all products
+    res.status(200).json(products);       // Send directly as array
+  } catch (error) {
+    res.status(500).json({ message: 'Server error while fetching products' });
+  }
 });
 
 module.exports = router;

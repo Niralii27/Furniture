@@ -13,28 +13,38 @@ const UpdateReview = () => {
 
     const [errors, setErrors] = useState({});
 
-    const products = [
-        { id: "1", name: "Zenith Pro Leather Bed" },
-        { id: "2", name: "Prism Light Sofa Short" },
-        { id: "3", name: "Cayman Round Solid Wood Coffee Table in Teak" },
-    ];
+     const [products, setProducts] = useState([]);
+     const [users, setUsers] = useState([]);
 
-    const users = [
-        { id: "101", name: "ms. swta parmar" },
-        { id: "102", name: "diya patel" },
-        { id: "103", name: "shyam shah" },
-    ];
-
-    useEffect(() => {
-        // Fetch review details from API using ID (Replace with actual API call later)
-        console.log(`Fetching review with ID: ${id}`);
-        setFormData({
-            productid: "1",
-            userid: "101",
-            rating: "5",
-            review: "Great product! Highly recommended.",
-        });
-    }, [id]);
+   // Fetch users and products on component mount
+     useEffect(() => {
+       const fetchData = async () => {
+         try {
+           // Fetch products
+           const productRes = await fetch("http://localhost:5000/api/product/get-all");
+           const productData = await productRes.json();
+           if (productRes.ok) {
+             setProducts(productData);
+           } else {
+             Swal.fire("Error", productData.message || "Failed to load products", "error");
+           }
+     
+           // Fetch users
+           const userRes = await fetch("http://localhost:5000/api/user/get-all");
+           const userData = await userRes.json();
+           if (userRes.ok) {
+             setUsers(userData);
+           } else {
+             Swal.fire("Error", userData.message || "Failed to load users", "error");
+           }
+         } catch (error) {
+           Swal.fire("Error", "Something went wrong while loading data", "error");
+         }
+       };
+     
+       fetchData();
+     }, []);
+     
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -90,8 +100,9 @@ const UpdateReview = () => {
                             <select className="form-select" id="productid" name="productid" value={formData.productid} onChange={handleChange}>
                                 <option value="" disabled>Select a product</option>
                                 {products.map((product) => (
-                                    <option key={product.id} value={product.id}>{product.name}</option>
-                                ))}
+                                    <option key={product._id} value={product._id}>{product.name}</option>
+                                    ))}
+
                             </select>
                             {errors.productid && <div className="text-danger">{errors.productid}</div>}
                         </div>
@@ -101,8 +112,11 @@ const UpdateReview = () => {
                             <select className="form-select" id="userid" name="userid" value={formData.userid} onChange={handleChange}>
                                 <option value="" disabled>Select a user</option>
                                 {users.map((user) => (
-                                    <option key={user.id} value={user.id}>{user.name}</option>
-                                ))}
+                                    <option key={user._id} value={user._id}>
+                                        {user.firstName} {user.lastName}
+                                    </option>
+                                    ))}
+
                             </select>
                             {errors.userid && <div className="text-danger">{errors.userid}</div>}
                         </div>
