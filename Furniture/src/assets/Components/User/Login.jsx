@@ -1,16 +1,15 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useLocation, useNavigate } from "react-router-dom";
+import {useNavigate } from "react-router-dom";
 
 import "../../css/login.css"; // You'll need to create this CSS file
 import "../../js/login.js";
 
 function Login() {
   // State to track which form is active
-  const [isLoginActive, setIsLoginActive] = useState(true);
+   const [isLoginActive, setIsLoginActive] = useState(true);
+  const [loading,setLoading] = useState(false);
 
-
-  const location = useLocation();
   const navigate = useNavigate();
 
 
@@ -134,7 +133,7 @@ function Login() {
     setLoginErrors(newLoginErrors);
 
     if (!hasErrors) {
-      console.log("Login data:", loginData);
+      // console.log("Login data:", loginData);
       // Add your login logic here
     }
   };
@@ -191,30 +190,28 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    console.log("nirali akbari ", loginData);
+    console.log("\n\n123 :  ", loginData);
 
 
     try {
-      const { data } = await axios.post("http://localhost:5000/api/Login/login",{
-        email,
-        password,
-      }
-       
+      const { data } = await axios.post("http://localhost:5000/api/Login/login",
+        loginData
       );
 
        // Store user token and details
        localStorage.setItem(`${data.user.role}token`, data.token);
        localStorage.setItem(data.user.role, JSON.stringify(data.user));
 
-       setStatusMessage(data.message);
-       setStatusType(data.status);
+      //  setStatusMessage(data.message);
+      //  setStatusType(data.status);
 
-       setTimeout(() => {
+      //  setTimeout(() => {
         navigate(data.user.role === "admin" ? "/admin-dashboard" : "/Home");
-      }, 2000);
+      // }, 2000);
     } catch (error) {
-      setStatusMessage(error.response?.data?.message || "Invalid credentials. Please try again!");
-      setStatusType(error.response?.data?.status || "error");
+      // setStatusMessage(error.response?.data?.message || "Invalid credentials. Please try again!");
+      // setStatusType(error.response?.data?.status || "error");
+      console.log(error);
     } finally {
       setLoading(false);
     }
@@ -243,6 +240,14 @@ function Login() {
       alert(error.response?.data?.message || "Your Email Address already registered !");
     }
   };
+
+  if (loading){
+    return(
+      <div>
+        Loading
+      </div>
+    )
+  }
 
   return (
     <div className="main-container1 mt-5 pt-5">

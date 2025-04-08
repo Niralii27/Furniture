@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
  //const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 const UserSchema = require("../models/Login");
+const Login = require("../models/Login");
 const router = express.Router();
 require("dotenv").config();
 
@@ -142,7 +143,7 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check if user exists
+    // Check if user
     const user = await Login.findOne({ email });
     if (!user) {
       return res.status(400).json({ status: "error", message: "Email is not registered!" });
@@ -159,7 +160,7 @@ router.post("/login", async (req, res) => {
     });
 
     // Send token & user details
-    res.status(200).json({
+    return res.status(200).json({
       message: "Login successful",
       status: "success",
       token,
@@ -173,7 +174,7 @@ router.post("/login", async (req, res) => {
   } catch (error) {
     console.error("🔥 Backend Error:", error); // Yeh error terminal me show karega
 
-    res.status(500).json({ error: "Something went wrong." });
+    return res.status(500).json({ error: "Something went wrong." });
   }
 });
 

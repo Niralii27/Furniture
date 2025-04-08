@@ -70,7 +70,7 @@ function ProductDetails() {
           </div>
 
           {/* Price */}
-          <h4>₹{product.price}</h4>
+          <h4>₹{product.salePrice}</h4>
 
           {/* Quantity */}
           <p className="mb-1">Quantity</p>

@@ -10,6 +10,7 @@ const offerRoutes = require("./AdminRoutes/offerRoutes");
 const userRoutes = require("./AdminRoutes/userRoutes"); 
 const reviewRoutes = require("./AdminRoutes/reviewRoutes"); 
 const contactRoutes = require("./AdminRoutes/contactRoutes"); 
+const cartRoutes = require("./AdminRoutes/cartRoutes");
 
 // Use the routes
 router.use("/Login", loginRoutes);
@@ -20,6 +21,7 @@ router.use("/Offer", offerRoutes);  //offer
 router.use("/User", userRoutes); //user
 router.use("/Review", reviewRoutes); //review
 router.use("/Contact", contactRoutes); //contact
+router.use("/Cart", cartRoutes); //Cart
 
 
 // Handle 404 errors for unknown routes
