@@ -204,9 +204,14 @@ function Login() {
 
       //  setStatusMessage(data.message);
       //  setStatusType(data.status);
-
+      if (data.user.role === "admin") {
+        window.location.href = "http://localhost:5174/admin";
+      } else {
+        navigate("/home");
+      }
+      
       //  setTimeout(() => {
-        navigate(data.user.role === "admin" ? "/admin-dashboard" : "/Home");
+        // navigate(data.user.role === "admin" ? "/Admin/admin/src/pages/Dashboard" : "/Home");
       // }, 2000);
     } catch (error) {
       // setStatusMessage(error.response?.data?.message || "Invalid credentials. Please try again!");
