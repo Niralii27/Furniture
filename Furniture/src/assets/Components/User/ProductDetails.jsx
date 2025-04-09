@@ -1,4 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import axios from "axios";
+
+
+
 import img1 from '../../images/cart1.png';
 import product1 from '../../images/cart1.png';
 import product2 from '../../images/cart2.png';
@@ -12,34 +17,35 @@ import { Link } from "react-router-dom"
 
 
 function ProductDetails() {
-  const [quantity, setQuantity] = useState(1);
+  const { id } = useParams();
+    const [quantity, setQuantity] = useState(1);
+  const [product, setProduct] = useState(null);
 
-  // Function to increase quantity
-  const increaseQuantity = () => {
-    setQuantity(quantity + 1);
-  };
+  // Fetch product data based on ID
+  useEffect(() => {
+    axios.get(`http://localhost:5000/api/Product/view-product/${id}`)
+    .then((res) => setProduct(res.data))
+      .catch((err) => console.error("Error fetching product:", err));
+  }, [id]);
 
-  // Function to decrease quantity (minimum 1)
+  // Quantity functions
+  const increaseQuantity = () => setQuantity(quantity + 1);
   const decreaseQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1);
-    }
+    if (quantity > 1) setQuantity(quantity - 1);
   };
 
-  return (
+  if (!product) return <div className="container pt-5">Loading...</div>;
+
+
+
+   return (
     <div className="container mt-4 mb-5 pt-5">
       {/* Breadcrumb */}
       <nav aria-label="breadcrumb">
         <ol className="breadcrumb">
-          <li className="breadcrumb-item">
-            <a href="#">Home</a>
-          </li>
-          <li className="breadcrumb-item">
-            <a href="#">Shop</a>
-          </li>
-          <li className="breadcrumb-item active" aria-current="page">
-            Wingback Chair
-          </li>
+          <li className="breadcrumb-item"><a href="#">Home</a></li>
+          <li className="breadcrumb-item"><a href="#">Shop</a></li>
+          <li className="breadcrumb-item active" aria-current="page">{product.name}</li>
         </ol>
       </nav>
 
@@ -47,16 +53,16 @@ function ProductDetails() {
         {/* Product Image */}
         <div className="col-md-5">
           <img
-            src={img1}
-            className="img-fluid"
-            alt="Chocolate"
+                src={product.productImage ? `http://127.0.0.1:5000/public/uploads/${product.productImage}` : "https://via.placeholder.com/50"} 
+                className="img-fluid"
+            alt={product.name}
           />
         </div>
 
         {/* Product Details */}
         <div className="col-md-7">
-          <h3>Wingback Chair</h3>
-          <p className="text-muted">Woodern Fabrics</p>
+          <h3>{product.name}</h3>
+          <p className="text-muted">{product.description}</p>
 
           {/* Rating */}
           <div className="mb-2">
@@ -64,23 +70,16 @@ function ProductDetails() {
           </div>
 
           {/* Price */}
-          <h4>₹4200.50</h4>
+          <h4>₹{product.salePrice}</h4>
 
           {/* Quantity */}
           <p className="mb-1">Quantity</p>
           <div className="btn-group mb-3">
-            <button className="btn btn-outline-dark" onClick={decreaseQuantity}>
-              -
-            </button>
+            <button className="btn btn-outline-dark" onClick={decreaseQuantity}>-</button>
             <button className="btn btn-outline-dark">{quantity}</button>
-            <button className="btn btn-outline-dark" onClick={increaseQuantity}>
-              +
-            </button>
-            <button className="btn custom-btn  ms-3">Add to cart</button>
-
+            <button className="btn btn-outline-dark" onClick={increaseQuantity}>+</button>
+            <button className="btn custom-btn ms-3">Add to cart</button>
           </div>
-
-          {/* Add to Cart Button */}
         </div>
       </div>
       
@@ -691,7 +690,7 @@ function ProductDetails() {
           }
         `}
       </style>
-    </div>
+      </div>
   );
 }
 

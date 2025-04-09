@@ -1,0 +1,366 @@
+import { useState, useEffect } from "react";
+import axios from "axios";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button,
+  TextField,
+  Pagination,
+  Box,
+  Typography,
+  IconButton,
+  Switch,
+} from "@mui/material";
+import { Edit, Add } from "@mui/icons-material";
+import { useNavigate, Link } from "react-router-dom";
+import { ArrowBack } from "@mui/icons-material";
+import { FaEye } from "react-icons/fa";
+import { LuArrowDownUp, LuArrowDown, LuArrowUp } from "react-icons/lu";
+import axiosInstance from "../../Authentication/axiosConfig";
+import AnimatedLogoLoader from "../../component/AnimatedLogoLoader";
+
+function Company() {
+  // State for companies data
+  const [companies, setCompanies] = useState([]);
+  const [statusFilter, setStatusFilter] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 5;
+  const [isLoading, setIsLoading] = useState(false);
+
+  const navigate = useNavigate();
+
+  // Fetch companies from the API
+  useEffect(() => {
+    setIsLoading(true);
+    axiosInstance
+      .get("/companies/")
+      .then((response) => {
+        console.log(response.data); // Check the structure of the response data
+        if (Array.isArray(response.data)) {
+          // Reverse the array to show latest entries first
+          const sortedData = [...response.data].reverse();
+          setCompanies(sortedData);
+        } else {
+          console.error("Received data is not an array");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching companies:", error);
+      })
+      .finally(() => {
+        setIsLoading(false); // Set loading to false after fetching data
+      });
+  }, []);
+  
+
+  // Handle toggle change (active status)
+  const handleToggleActive = async (companieId, currentStatus) => {
+    try {
+      const response = await axiosInstance.put(
+        `/companies/toggle/${companieId}`
+      );
+      console.log("companie status toggled:", response.data);
+
+      // Update the state directly
+      setCompanies((prevcompanies) =>
+        prevcompanies.map((companie) =>
+          companie.id === companieId
+            ? { ...companie, activeStatus: !currentStatus } // Toggle status in the UI
+            : companie
+        )
+      );
+    } catch (error) {
+      console.error("Error toggling companie status:", error);
+    }
+  };
+
+  // filter/search/pagination/datetime format
+  // Sorting states
+  const [sortField, setSortField] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc");
+
+  const handleSort = (field) => {
+    setSortField(field);
+    setSortOrder((prevOrder) => (prevOrder === "asc" ? "desc" : "asc"));
+  };
+
+  // Example usage
+  const handleSortByName = () => handleSort("companyName");
+  const handleSortByOwner = () => handleSort("ownerName");
+  const handleSortByGST = () => handleSort("GSTNumber");
+  const handleSortByDate = () => handleSort("createDate");
+
+  const handleStatusFilter = (status) => {
+    if (statusFilter === status) {
+      setStatusFilter(null);
+    } else {
+      setStatusFilter(status);
+    }
+  };
+  // datetime
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+
+    const day = ("0" + date.getDate()).slice(-2); // Adds leading zero if day is single digit
+    const month = ("0" + (date.getMonth() + 1)).slice(-2); // Adds leading zero if month is single digit
+    const year = date.getFullYear();
+    const hours = ("0" + date.getHours()).slice(-2); // Adds leading zero if hours are single digit
+    const minutes = ("0" + date.getMinutes()).slice(-2); // Adds leading zero if minutes are single digit
+
+    return `${day}/${month}/${year} | ${hours}:${minutes}`;
+  };
+
+  const filteredCompanies = companies
+    .filter((company) => {
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearchQuery =
+        company.companyName.toLowerCase().includes(searchLower) ||
+        company.ownerName.toLowerCase().includes(searchLower) ||
+        company.GSTNumber.toLowerCase().includes(searchLower) ||
+        (company.createDate &&
+          formatDate(company.createDate).includes(searchQuery));
+
+      const matchesStatus =
+        statusFilter === null || company.activeStatus === statusFilter;
+
+      return matchesSearchQuery && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (sortField === "companyName") {
+        return sortOrder === "asc"
+          ? a.companyName.localeCompare(b.companyName)
+          : b.companyName.localeCompare(a.companyName);
+      }
+      if (sortField === "ownerName") {
+        return sortOrder === "asc"
+          ? a.ownerName.localeCompare(b.ownerName)
+          : b.ownerName.localeCompare(a.ownerName);
+      }
+      if (sortField === "GSTNumber") {
+        return sortOrder === "asc"
+          ? a.GSTNumber.localeCompare(b.GSTNumber)
+          : b.GSTNumber.localeCompare(a.GSTNumber);
+      }
+      if (sortField === "createDate") {
+        return sortOrder === "asc"
+          ? new Date(a.createDate) - new Date(b.createDate)
+          : new Date(b.createDate) - new Date(a.createDate);
+      }
+      return 0; // No sorting applied
+    });
+
+  // Apply pagination
+  const paginatedCompanies = filteredCompanies.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+  };
+  // search-pagination
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+  };
+
+  return (
+    <Box p={3}>
+      <Box sx={{ display: "flex" }}>
+        <Button
+          variant="text"
+          color="primary"
+          onClick={() => navigate(-1)}
+          sx={{ mb: 2 }}
+        >
+          <ArrowBack />
+        </Button>
+        <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
+          Company Listing
+        </Typography>
+      </Box>
+      <Box>
+        <Typography
+          variant="subtitle1"
+          sx={{ color: "grey.600", mb: 5, marginLeft: "60px" }}
+        >
+          <Link to="/" style={{ textDecoration: "none" }}>
+            Dashboard
+          </Link>{" "}
+          / Company Listing
+        </Typography>
+      </Box>
+
+      <Box
+        sx={{
+          background: "#fff",
+          borderRadius: "20px",
+          padding: "20px 20px 30px 20px",
+        }}
+      >
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={3}
+          mt={5}
+        >
+          <Box display="flex" gap={2}>
+            <TextField
+              placeholder="Search"
+              variant="outlined"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              sx={{
+                height: "40px", // Adjust the height
+                "& .MuiInputBase-root": {
+                  height: "40px", // Matches the parent height
+                },
+              }}
+            />
+            <Button
+              variant={statusFilter === true ? "contained" : "outlined"}
+              color="success"
+              onClick={() => handleStatusFilter(true)}
+            >
+              Active
+            </Button>
+            <Button
+              variant={statusFilter === false ? "contained" : "outlined"}
+              color="error"
+              onClick={() => handleStatusFilter(false)}
+            >
+              Inactive
+            </Button>
+          </Box>
+
+          <Link to="/addCompany">
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              color="primary"
+              sx={{ p: 1 }}
+            >
+              Add Company
+            </Button>
+          </Link>
+        </Box>
+
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {/* Company Name */}
+                <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                  Company Name
+                  <IconButton onClick={() => handleSort("companyName")}>
+                    <LuArrowDownUp className="fs-6" />
+                  </IconButton>
+                </TableCell>
+
+                {/* Owner Name */}
+                <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                  Owner Name
+                  <IconButton onClick={() => handleSort("ownerName")}>
+                    <LuArrowDownUp className="fs-6" />
+                  </IconButton>
+                </TableCell>
+
+                {/* GST Number */}
+                <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                  GST Number
+                  <IconButton onClick={() => handleSort("GSTNumber")}>
+                    <LuArrowDownUp className="fs-6" />
+                  </IconButton>
+                </TableCell>
+
+                {/* Created On */}
+                <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                  Created On
+                  <IconButton onClick={() => handleSort("createDate")}>
+                    <LuArrowDownUp className="fs-6" />
+                  </IconButton>
+                </TableCell>
+
+                {/* Is Active? */}
+                <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                  Is Active?
+                </TableCell>
+
+                {/* Action */}
+                <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                  Action
+                </TableCell>
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center">
+                    <AnimatedLogoLoader />
+                  </TableCell>
+                </TableRow>
+              ) : companies.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center">
+                    No Companies found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedCompanies.map((companie) => (
+                  <TableRow key={companie.id}>
+                    <TableCell align="center">{companie.companyName}</TableCell>
+                    <TableCell align="center">{companie.ownerName}</TableCell>
+                    <TableCell align="center">{companie.GSTNumber}</TableCell>
+                    <TableCell align="center">
+                      {formatDate(companie.createDate)}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Switch
+                        checked={companie.activeStatus}
+                        onChange={() =>
+                          handleToggleActive(companie.id, companie.activeStatus)
+                        }
+                      />
+                    </TableCell>
+
+                    <TableCell align="center">
+                      <Link to={`/viewCompany/${companie.id}`}>
+                        <IconButton color="dark">
+                          <FaEye />
+                        </IconButton>
+                      </Link>
+                      <Link to={`/editCompany/${companie.id}`}>
+                        <IconButton color="dark">
+                          <Edit />
+                        </IconButton>
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {/* pagination */}
+        <Box mt={3} display="flex" justifyContent="center">
+          <Pagination
+            count={Math.ceil(filteredCompanies.length / rowsPerPage)}
+            page={currentPage}
+            onChange={handlePageChange}
+            sx={{ mt: 3 }}
+            color="primary"
+          />
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+export default Company;

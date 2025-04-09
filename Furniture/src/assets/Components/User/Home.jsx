@@ -1,5 +1,5 @@
-import React from 'react';
-import '../../css/style.css';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';import '../../css/style.css';
 import '../../css/swiper-bundle.min.css';
 import '../../js/swiper-bundle.min.js';
 import { Link } from "react-router-dom"
@@ -32,6 +32,44 @@ import img3 from '../../images/img3.jpg';
 
 
 function Home() {
+  
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  //Pagination
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+    // 🟡 Calculate current products to display
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentProducts = products.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(products.length / itemsPerPage);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = () => {
+    axios
+      .get("http://localhost:5000/api/Product/view-product")
+      .then((response) => {
+        setProducts(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching products:", error);
+       
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  // useEffect(() => {
+  //   window.scrollTo(0, 0);
+  // }, [currentPage]);
+
   
   return (
     <div className="main-container">
@@ -66,8 +104,122 @@ function Home() {
       <div className="container my-5">
         <h2 className="mb-4">Featured products</h2>
         
-        <div className="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4">
-          <div className="col">
+
+
+   <div className="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4">
+
+         {loading ? (
+                      <p>Loading...</p>
+                    ) : (
+                      currentProducts.map((product, index) => (
+                        <div className="col" key={index}>
+                      <div className="card h-100 border-light position-relative product-card">
+                        <div className="position-absolute top-0 start-0 m-2">
+                          <span className="badge bg-warning text-dark py-2 px-3">SAVE {product.discount || 0}%</span>
+                        </div>
+                        <Link to="/Wishlist">
+                          <button className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn">
+                            <i className="bi bi-heart-fill text-danger"></i>
+                          </button>
+                        </Link>
+                        <img
+                          src={product.productImage ? `http://127.0.0.1:5000/public/uploads/${product.productImage}` : "https://via.placeholder.com/50"} 
+                          className="card-img-top p-3"
+                          alt={product.name}
+                          style={{ height: "240px", objectFit: "contain" }}
+                        />
+                        <Link to={`/ProductDetails/${product._id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                          <div className="card-body pb-0">
+                            <p className="text-muted mb-1">{product.category || "Category"}</p>
+                            <h5 className="card-title">{product.name}</h5>
+                            <div className="d-flex align-items-center">
+                              <span className="star-rating">
+                                <i className="bi bi-star-fill"></i>
+                                <i className="bi bi-star-fill"></i>
+                                <i className="bi bi-star-fill"></i>
+                                <i className="bi bi-star-fill"></i>
+                                <i className="bi bi-star-half"></i>
+                              </span>
+                              <span className="ms-1 text-muted">(6)</span>
+                            </div>
+                          </div>
+        
+                          <div className="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
+                            <div className="mt-5">
+                              <span className="text fw-bold">₹{product.costPrice}</span>
+                              <small className="text-muted ms-2 text-decoration-line-through">
+                                ₹{product.salePrice}
+                              </small>
+                            </div>
+                            <Link to="/Cart" style={{ textDecoration: "none", color: "inherit" }}>
+                              <button
+                                className="mt-5"
+                                style={{
+                                  border: "1px solid #d2b48c",
+                                  backgroundColor: "white",
+                                  color: "black",
+                                  padding: "8px 16px",
+                                  fontWeight: "bold",
+                                  cursor: "pointer",
+                                  transition: "background-color 0.3s ease, border-color 0.3s ease",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.target.style.backgroundColor = "#a67c52";
+                                  e.target.style.color = "white";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.target.style.backgroundColor = "white";
+                                  e.target.style.color = "black";
+                                }}
+                              >
+                                <span className="me-1">Add</span>
+                                <i className="bi bi-cart-plus"></i>
+                              </button>
+                            </Link>
+                          </div>
+                        </Link>
+                      </div>
+                    </div>
+                  ))
+                )}
+          </div> 
+
+             <nav aria-label="Product Pagination">
+                                <ul className="pagination justify-content-end mt-4">
+                                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                                    <button
+                                      className="page-link"
+                                      style={currentPage === 1 ? { backgroundColor: "white", color: "#a67c52" } : {}}
+                                      onClick={() => setCurrentPage(prev => prev - 1)}
+                                      disabled={currentPage === 1}
+                                    >
+                                      Previous
+                                    </button>
+                                  </li>
+        
+                                  {[...Array(totalPages)].map((_, i) => (
+                                    <li key={i} className={`page-item  ${currentPage === i + 1 ? "active" : ""}`}>
+                                      <button className="page-link" onClick={() => setCurrentPage(i + 1)}>
+                                        {i + 1}
+                                      </button>
+                                    </li>
+                                  ))}
+        
+                                  <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                                  <button
+                                    className="page-link"
+                                    style={currentPage === totalPages ? { backgroundColor: "white", color: "#a67c52" } : {}}
+                                    onClick={() => setCurrentPage(prev => prev + 1)}
+                                    disabled={currentPage === totalPages}
+                                  >
+                                    Next
+                                  </button>
+                                  </li>
+                                </ul>
+                              </nav>
+        
+
+          {/* <div className="col">
             <div className="card h-100 border-light position-relative product-card">
               <div className="position-absolute top-0 start-0 m-2">
                 <span className="badge bg-warning text-dark py-2 px-3">SAVE 15%</span>
@@ -132,8 +284,8 @@ function Home() {
               </Link>
             </div>
           </div>
-          
-          <div className="col">
+           */}
+          {/* <div className="col">
             <div className="card h-100 border-light position-relative product-card">
               <div className="position-absolute top-0 start-0 m-2">
                 <span className="badge bg-warning text-dark py-2 px-3">SAVE 48%</span>
@@ -194,9 +346,9 @@ function Home() {
                 </Link>
               </div>
             </div>
-          </div>
+          </div> */}
           
-          <div className="col">
+          {/* <div className="col">
             <div className="card h-100 border-light position-relative product-card">
               <div className="position-absolute top-0 start-0 m-2">
                 <span className="badge bg-warning text-dark py-2 px-3">SAVE 15%</span>
@@ -259,9 +411,9 @@ function Home() {
 
               </div>
             </div>
-          </div>
+          </div> */}
           
-          <div className="col">
+          {/* <div className="col">
             <div className="card h-100 border-light position-relative product-card">
               <div className="position-absolute top-0 start-0 m-2">
                 <span className="badge bg-warning text-dark py-2 px-3">SAVE 15%</span>
@@ -323,8 +475,9 @@ function Home() {
 
               </div>
             </div>
-          </div>
-          <div className="col">
+          </div> */}
+
+          {/* <div className="col">
             <div className="card h-100 border-light position-relative product-card">
               <div className="position-absolute top-0 start-0 m-2">
                 <span className="badge bg-warning text-dark py-2 px-3">SAVE 15%</span>
@@ -387,8 +540,9 @@ function Home() {
 
               </div>
             </div>
-          </div>
-          <div className="col">
+          </div> */}
+
+          {/* <div className="col">
             <div className="card h-100 border-light position-relative product-card">
               <div className="position-absolute top-0 start-0 m-2">
                 <span className="badge bg-warning text-dark py-2 px-3">SAVE 15%</span>
@@ -450,8 +604,10 @@ function Home() {
 
               </div>
             </div>
-          </div>
-          <div className="col">
+          </div> */}
+
+
+          {/* <div className="col">
             <div className="card h-100 border-light position-relative product-card">
               <div className="position-absolute top-0 start-0 m-2">
                 <span className="badge bg-warning text-dark py-2 px-3">SAVE 10%</span>
@@ -514,8 +670,9 @@ function Home() {
 
               </div>
             </div>
-          </div>
-          <div className="col">
+          </div> */}
+
+          {/* <div className="col">
             <div className="card h-100 border-light position-relative product-card" style={{
                   filter: "blur(1px)", // Blurred effect
                   opacity: "0.9", // Reduce visibility
@@ -599,7 +756,7 @@ function Home() {
     </ul>
   </nav>
 
-          </div>
+          </div> */}
          <br/>
           <div className="container-fluid p-0 w-100 mt-5 pt-5">
 <br/>
@@ -766,7 +923,13 @@ function Home() {
      
         </div>
         
-      </div>
+                    
+                           
+        
+  
+                                
+      
+      
       <div className="container-fluid p-0 w-100 mt-5 pt-5">
 
 <section style={{ backgroundColor: '#f4f5f7' }}>

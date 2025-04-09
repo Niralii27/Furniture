@@ -1,12 +1,12 @@
-import { useState,useEffect } from "react";
-import { Link } from "react-router-dom";
-import { toast } from "react-toastify";
-import { useSearchParams } from 'react-router-dom';
-import Swal from 'sweetalert2';
-import { useNavigate } from "react-router-dom"; 
+import { useState ,useEffect} from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import axios from "axios";
 
 const AddOrder = () => {
-    const navigate = useNavigate(); //redirect on other page
+    const navigate = useNavigate();
+
+    
     const [formData, setFormData] = useState({
         userId: "",
         orderDate: "",
@@ -24,84 +24,133 @@ const AddOrder = () => {
 
     const [errors, setErrors] = useState({});
 
-    // Dummy Users & Products
-    const users = [{ id: "1", name: "User 1" }, { id: "2", name: "User 2" }];
-    const products = [{ id: "101", name: "Product 1" }, { id: "102", name: "Product 2" }];
+    const [users, setUsers] = useState([]);
+    const [products, setProducts] = useState([]);
 
-    // Handle Input Change
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // Handle Product Changes
     const handleProductChange = (index, e) => {
         const { name, value } = e.target;
-        const newProducts = [...formData.products];
-        newProducts[index][name] = value;
-        setFormData({ ...formData, products: newProducts });
+        const updatedProducts = [...formData.products];
+        updatedProducts[index][name] = value;
+        setFormData(prev => ({ ...prev, products: updatedProducts }));
     };
 
-    // Add & Remove Products
-    const addProduct = () => setFormData({ ...formData, products: [...formData.products, { productId: "", quantity: 1 }] });
-    const removeProduct = (index) => setFormData({ ...formData, products: formData.products.filter((_, i) => i !== index) });
+    const addProduct = () => {
+        setFormData(prev => ({
+            ...prev,
+            products: [...prev.products, { productId: "", quantity: 1 }]
+        }));
+    };
 
-    // Validate Form
+    const removeProduct = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            products: prev.products.filter((_, i) => i !== index)
+        }));
+    };
+
     const validateForm = () => {
         const newErrors = {};
         if (!formData.userId) newErrors.userId = "User is required.";
         if (!formData.orderDate) newErrors.orderDate = "Order date is required.";
+
         formData.products.forEach((product, index) => {
             if (!product.productId) newErrors[`products.${index}.productId`] = "Product is required.";
             if (!product.quantity || product.quantity <= 0) newErrors[`products.${index}.quantity`] = "Quantity must be greater than 0.";
         });
+
         ["firstName", "lastName", "address", "city", "state", "pinCode", "phone", "shippingCharge"].forEach((field) => {
             if (!formData[field]) newErrors[field] = `${field.replace(/([A-Z])/g, " $1")} is required.`;
         });
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    // Submit Form
+       // Fetch users and products on component mount
+        useEffect(() => {
+          const fetchData = async () => {
+            try {
+              // Fetch products
+              const productRes = await fetch("http://localhost:5000/api/product/get-all");
+              const productData = await productRes.json();
+              if (productRes.ok) {
+                setProducts(productData);
+              } else {
+                Swal.fire("Error", productData.message || "Failed to load products", "error");
+              }
+        
+              // Fetch users
+              const userRes = await fetch("http://localhost:5000/api/user/get-all");
+              const userData = await userRes.json();
+              if (userRes.ok) {
+                setUsers(userData);
+              } else {
+                Swal.fire("Error", userData.message || "Failed to load users", "error");
+              }
+            } catch (error) {
+              Swal.fire("Error", "Something went wrong while loading data", "error");
+            }
+          };
+        
+          fetchData();
+        }, []);
+        
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
-        if (validateForm()) {
-            try {
-                const response = await axios.post("http://localhost:5000/api/admin/add-order", formData);
-    
-                if (response.status === 201) {
-                    Swal.fire({
-                        title: 'Success!',
-                        text: response.data.message || 'Order added successfully.',
-                        icon: 'success',
-                        confirmButtonText: 'OK'
-                    }).then(() => {
-                        navigate("/admin/orders"); // redirect after success
-                    });
-                } else {
-                    Swal.fire({
-                        title: 'Error!',
-                        text: response.data.error || 'Something went wrong.',
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    });
-                }
-            } catch (error) {
+        if (!validateForm()) return;
+
+        try {
+            const response = await axios.post("http://localhost:5000/api/Order/add-order", formData);
+            if (response.status === 201) {
                 Swal.fire({
-                    title: 'Error!',
-                    text: error.response?.data?.error || "Failed to add order. Please try again.",
-                    icon: 'error',
-                    confirmButtonText: 'OK'
+                    title: "Success!",
+                    text: response.data.message || "Order added successfully.",
+                    icon: "success",
+                    confirmButtonText: "OK"                                                                                                     
+                }).then(() => {
+                    navigate("/admin/orders");
+                });
+
+                // Reset form after success
+                setFormData({
+                    userId: "",
+                    orderDate: "",
+                    products: [{ productId: "", quantity: 1 }],
+                    firstName: "",
+                    lastName: "",
+                    address: "",
+                    city: "",
+                    state: "",
+                    pinCode: "",
+                    phone: "",
+                    shippingCharge: "",
+                    status: "Pending"
+                });
+            } else {
+                Swal.fire({
+                    title: "Error!",
+                    text: response.data.error || "Something went wrong.",
+                    icon: "error",
+                    confirmButtonText: "OK"
                 });
             }
+        } catch (err) {
+            Swal.fire({
+                title: "Error!",
+                text: err.response?.data?.error || "Failed to add order. Please try again.",
+                icon: "error",
+                confirmButtonText: "OK"
+            });
         }
     };
-    
 
     return (
         <div className="container mt-4">
-            {/* Header Section */}
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2>Add New Order</h2>
                 <nav>
@@ -109,19 +158,29 @@ const AddOrder = () => {
                 </nav>
             </div>
 
-            {/* Form Start */}
             <form onSubmit={handleSubmit}>
-
                 {/* Order Information */}
                 <div className="card p-4 mb-4">
                     <h4>Order Information</h4>
                     <div className="row">
                         <div className="col-md-6">
                             <label className="form-label">User</label>
-                            <select className="form-select" name="userId" value={formData.userId} onChange={handleChange}>
-                                <option value="">Select User</option>
-                                {users.map(user => <option key={user.id} value={user.id}>{user.name}</option>)}
+                            <select
+                                className="form-select"
+                                id="userId"
+                                name="userId" 
+                                value={formData.userId}
+                                onChange={handleChange}
+                                >
+                                <option value="" disabled>Select a user</option>
+                                {users.map((user) => (
+                                    <option key={user._id} value={user._id}>
+                                    {user.firstName} {user.lastName}
+                                    </option>
+                                ))}
                             </select>
+
+
                             {errors.userId && <small className="text-danger">{errors.userId}</small>}
                         </div>
                         <div className="col-md-6">
@@ -139,10 +198,18 @@ const AddOrder = () => {
                         <div key={index} className="row mb-3">
                             <div className="col-md-5">
                                 <label className="form-label">Product</label>
-                                <select className="form-select" name="productId" value={product.productId} onChange={(e) => handleProductChange(index, e)}>
+                                <select
+                                    className="form-select"
+                                    name="productId"
+                                    value={product.productId}
+                                    onChange={(e) => handleProductChange(index, e)}
+                                >
                                     <option value="">Select Product</option>
-                                    {products.map(prod => <option key={prod.id} value={prod.id}>{prod.name}</option>)}
+                                    {products.map(prod => (
+                                        <option key={prod._id} value={prod._id}>{prod.name}</option>
+                                    ))}
                                 </select>
+
                                 {errors[`products.${index}.productId`] && <small className="text-danger">{errors[`products.${index}.productId`]}</small>}
                             </div>
                             <div className="col-md-5">
@@ -178,22 +245,25 @@ const AddOrder = () => {
                 <div className="card p-4 mb-4">
                     <h4>Order Summary</h4>
                     <div className="row">
-                        <div className="col-md-6">
+                        <div className="col-md-6 mb-3">
                             <label className="form-label">Shipping Charge</label>
                             <input type="number" className="form-control" name="shippingCharge" value={formData.shippingCharge} onChange={handleChange} />
+                            {errors.shippingCharge && <small className="text-danger">{errors.shippingCharge}</small>}
                         </div>
-                        <div className="col-md-6">
+                        <div className="col-md-6 mb-3">
                             <label className="form-label">Order Status</label>
                             <select className="form-select" name="status" value={formData.status} onChange={handleChange}>
-                                <option>Pending</option><option>Processing</option><option>Shipped</option><option>Delivered</option><option>Cancelled</option>
+                                <option>Pending</option>
+                                <option>Processing</option>
+                                <option>Shipped</option>
+                                <option>Delivered</option>
+                                <option>Cancelled</option>
                             </select>
                         </div>
                     </div>
-                    
                 </div>
 
-                {/* <button type="submit" className="btn btn-success">Submit Order</button> */}
-                <button type="submit" className="btn btn-primary w-100">Submit Order</button><br></br>
+                <button type="submit" className="btn btn-primary w-100">Submit Order</button>
             </form>
         </div>
     );

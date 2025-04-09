@@ -2,10 +2,13 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import axios from "axios";
+import { Pagination, Box } from "@mui/material";
 
 const UserList = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage] = useState(5); // You can make this dynamic if needed
 
     useEffect(() => {
         fetchUsers();
@@ -43,7 +46,7 @@ const UserList = () => {
                 axios.delete(`http://localhost:5000/api/User/delete-user/${userId}`)
                     .then(() => {
                         Swal.fire("Deleted!", "User has been deleted.", "success");
-                        fetchUsers(); // Refresh list
+                        fetchUsers();
                     })
                     .catch((error) => {
                         console.error("Error deleting user:", error);
@@ -52,6 +55,15 @@ const UserList = () => {
             }
         });
     };
+
+    const handlePageChange = (event, value) => {
+        setCurrentPage(value);
+    };
+
+    const indexOfLastUser = currentPage * rowsPerPage;
+    const indexOfFirstUser = indexOfLastUser - rowsPerPage;
+    const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
+    const totalPages = Math.ceil(users.length / rowsPerPage);
 
     return (
         <div>
@@ -77,55 +89,69 @@ const UserList = () => {
                 {loading ? (
                     <p>Loading users...</p>
                 ) : (
-                    <table className="table border text-nowrap">
-                        <thead className="table-light">
-                            <tr>
-                                <th>Image</th>
-                                <th>First Name</th>
-                                <th>Last Name</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.length > 0 ? (
-                                users.map((user) => (
-                                    <tr key={user._id}>
-                                        <td>
-                                            <img
-                                                src={user.userImage ? `http://127.0.0.1:5000/public/uploads/${user.userImage}` : "https://via.placeholder.com/50"}
-                                                alt={user.firstName}
-                                                style={{ width: 50, height: 50, objectFit: "cover", borderRadius: "50%" }}
-                                            />
-                                        </td>
-                                        <td>{user.firstName}</td>
-                                        <td>{user.lastName}</td>
-                                        <td>{user.email}</td>
-                                        <td>{user.phone}</td>
-                                        <td>
-                                            <div className="d-flex flex-nowrap">
-                                                <Link className="text-primary me-2" to={`/admin/update-user?user_id=${user._id}`}>
-                                                    <i className="fas fa-edit"></i>
-                                                </Link>
-                                                <span
-                                                    className="text-danger"
-                                                    style={{ cursor: "pointer" }}
-                                                    onClick={() => handleDelete(user._id)}
-                                                >
-                                                    <i className="fas fa-trash-alt"></i>
-                                                </span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
+                    <>
+                        <table className="table border text-nowrap">
+                            <thead className="table-light">
                                 <tr>
-                                    <td colSpan="6">There are no users to display!</td>
+                                    <th>Image</th>
+                                    <th>First Name</th>
+                                    <th>Last Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Actions</th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {currentUsers.length > 0 ? (
+                                    currentUsers.map((user) => (
+                                        <tr key={user._id}>
+                                            <td>
+                                                <img
+                                                    src={user.userImage ? `http://127.0.0.1:5000/public/uploads/${user.userImage}` : "https://via.placeholder.com/50"}
+                                                    alt={user.firstName}
+                                                    style={{ width: 50, height: 50, objectFit: "cover", borderRadius: "50%" }}
+                                                />
+                                            </td>
+                                            <td>{user.firstName}</td>
+                                            <td>{user.lastName}</td>
+                                            <td>{user.email}</td>
+                                            <td>{user.phone}</td>
+                                            <td>
+                                                <div className="d-flex flex-nowrap">
+                                                    <Link className="text-primary me-2" to={`/admin/update-user?user_id=${user._id}`}>
+                                                        <i className="fas fa-edit"></i>
+                                                    </Link>
+                                                    <span
+                                                        className="text-danger"
+                                                        style={{ cursor: "pointer" }}
+                                                        onClick={() => handleDelete(user._id)}
+                                                    >
+                                                        <i className="fas fa-trash-alt"></i>
+                                                    </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="6">There are no users to display!</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+
+                        {/* Pagination Controls */}
+                        {users.length > rowsPerPage && (
+                            <Box mt={3} display="flex" justifyContent="center">
+                                <Pagination
+                                    count={totalPages}
+                                    page={currentPage}
+                                    onChange={handlePageChange}
+                                    color="primary"
+                                />
+                            </Box>
+                        )}
+                    </>
                 )}
             </div>
         </div>
