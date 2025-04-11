@@ -8,7 +8,8 @@ const UserList = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    const [rowsPerPage] = useState(5); // You can make this dynamic if needed
+    const [rowsPerPage] = useState(5); // for pagination
+    const [searchQuery, setSearchQuery] = useState(""); // for searching
 
     useEffect(() => {
         fetchUsers();
@@ -60,14 +61,21 @@ const UserList = () => {
         setCurrentPage(value);
     };
 
+    // Filtered user list
+    const filteredUsers = users.filter((user) =>
+        `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.phone.toString().includes(searchQuery)
+    );
+
+    const totalPages = Math.ceil(filteredUsers.length / rowsPerPage);
     const indexOfLastUser = currentPage * rowsPerPage;
     const indexOfFirstUser = indexOfLastUser - rowsPerPage;
-    const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
-    const totalPages = Math.ceil(users.length / rowsPerPage);
+    const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
 
     return (
         <div>
-            <div className="d-flex justify-content-between align-items-center mt-5 mb-5">
+            <div className="d-flex justify-content-between align-items-center mt-5 mb-5 flex-wrap">
                 <div>
                     <h1>Users</h1>
                     <ol className="breadcrumb mb-0">
@@ -75,7 +83,19 @@ const UserList = () => {
                         <li className="breadcrumb-item active">Users</li>
                     </ol>
                 </div>
-                <div className="d-flex gap-2">
+
+                <div className="d-flex align-items-center gap-2 mt-3 mt-md-0">
+                    <input
+                        type="text"
+                        className="form-control"
+                        style={{ maxWidth: "250px" }}
+                        placeholder="Search by name, email or phone..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1); // reset to first page on new search
+                        }}
+                    />
                     <Link className="btn btn-outline-secondary" to="/admin">
                         <i className="fas fa-arrow-left"></i>
                     </Link>
@@ -134,14 +154,14 @@ const UserList = () => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="6">There are no users to display!</td>
+                                        <td colSpan="6">No users found!</td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
 
                         {/* Pagination Controls */}
-                        {users.length > rowsPerPage && (
+                        {filteredUsers.length > rowsPerPage && (
                             <Box mt={3} display="flex" justifyContent="center">
                                 <Pagination
                                     count={totalPages}
