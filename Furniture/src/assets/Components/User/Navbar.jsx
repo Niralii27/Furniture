@@ -2,7 +2,7 @@ import React from 'react';
 import '../../css/header.css'; 
 import { Link } from "react-router-dom"
 import { NavLink } from "react-router-dom";
-import logo from '../../images/logo.jpeg';
+// logo from '../../images/logo.jpeg';
 
 <ul className="navbar-nav mx-auto mb-2 mb-lg-0">
   <li className="nav-item">
@@ -28,7 +28,7 @@ import logo from '../../images/logo.jpeg';
 </ul>
 
 
-import person1 from '../../images/person_4.jpg';
+//import person1 from '../../images/person_4.jpg';
 
 function Navbar() {
   return (

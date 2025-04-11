@@ -1,44 +1,89 @@
-import React, { useState } from 'react';
-import cart1 from '../../images/cart1.png';
-import cart2 from '../../images/cart2.png';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+//import cart1 from '../../images/cart1.png';
+//import cart2 from '../../images/cart2.png';
 import contactimg from '../../images/contact.jpg';
 import { Link } from "react-router-dom"
 
 
 
+
 function Cart() {
-  const [product1Quantity, setProduct1Quantity] = useState(3);
-  const [product2Quantity, setProduct2Quantity] = useState(1);
+  const [cartItems, setCartItems] = useState([]);
 
-  // Button styles
-  const buttonStyle = {
-    border: '1px solid #d2b48c', // Light brown border
-    backgroundColor: 'white',
-    color: '#333',
-    transition: 'all 0.3s ease'
+  const user = JSON.parse(localStorage.getItem("user"));
+  const userId = user?.id;
+
+          
+
+        // Button styles
+        const buttonStyle = {
+          border: '1px solid #d2b48c', // Light brown border
+          backgroundColor: 'white',
+          color: '#333',
+          transition: 'all 0.3s ease'
+        };
+
+        const fetchCart = async () => {
+          try {
+            const res = await axios.get(`http://localhost:5000/api/Cart/user/${userId}`);
+            setCartItems(res.data);
+          } catch (err) {
+            console.error("Error fetching cart:", err);
+          }
+        };
+      
+        // ✅ useEffect to load cart on component mount
+        useEffect(() => {
+          if (userId) {
+            fetchCart();
+          }
+        }, [userId]);
+      
+        // ✅ Remove item from cart
+        const removeItem = async (id) => {
+          try {
+            await axios.delete(`http://localhost:5000/api/Cart/remove/${id}`);
+            fetchCart(); // Refresh cart after removal
+          } catch (err) {
+            console.error("Error removing item:", err);
+          }
+        };
+      
+  
+
+  const increaseQuantity = async (itemId) => {
+    const updatedCart = cartItems.map(item =>
+      item._id === itemId ? { ...item, quantity: item.quantity + 1 } : item
+    );
+    setCartItems(updatedCart);
+    // Optionally, call backend to update quantity
   };
 
-  // Button hover style will be handled with inline CSS class
-
-  const increaseQuantity = (product) => {
-    if (product === 1) {
-      setProduct1Quantity(product1Quantity + 1);
-    } else {
-      setProduct2Quantity(product2Quantity + 1);
-    }
+  const decreaseQuantity = async (itemId) => {
+    const updatedCart = cartItems.map(item =>
+      item._id === itemId && item.quantity > 1
+        ? { ...item, quantity: item.quantity - 1 }
+        : item
+    );
+    setCartItems(updatedCart);
+    // Optionally, call backend to update quantity
   };
 
-  const decreaseQuantity = (product) => {
-    if (product === 1 && product1Quantity > 1) {
-      setProduct1Quantity(product1Quantity - 1);
-    } else if (product === 2 && product2Quantity > 1) {
-      setProduct2Quantity(product2Quantity - 1);
-    }
+  const calculateTotal = (costPrice, quantity) => {
+    return (costPrice * quantity).toFixed(2);
   };
 
-  const calculateTotal = (price, quantity) => {
-    return (price * quantity).toFixed(2);
+
+  //checkout page
+
+  const handleCheckout = () => {
+    // Save cart items to localStorage
+    localStorage.setItem('checkoutCart', JSON.stringify(cartItems));
+    // Redirect to checkout page
+    window.location.href = '/Checkout'; // or use navigate('/Checkout') if using React Router
   };
+  
 
   return (
     <div style={{ backgroundColor: "#FAFDFF"}}>
@@ -83,90 +128,61 @@ function Cart() {
                 </tr>
               </thead>
               <tbody>
+              {cartItems.length === 0 ? (
+            <tr><td colSpan="4">Cart is empty</td></tr>
+          ) : (
+            cartItems.map((item) => (
                 <tr className="border-bottom">
                   <td>
-                    <img src={cart1} alt="Product 1" className="img-fluid" style={{maxWidth: '100px'}} />
+                    <img src={item.productImage ? `http://127.0.0.1:5000/public/uploads/${item.productImage}` : "https://via.placeholder.com/50"} 
+ alt="Product 1" className="img-fluid" style={{maxWidth: '100px'}} />
                   </td>
-                  <td className="align-middle">Product 1</td>
-                  <td className="align-middle">₹1080.00</td>
+                  <td className="align-middle">{item.productId?.name}</td>
+                  <td className="align-middle">₹{item.productId?.costPrice}</td>
                   <td className="align-middle">
                     <div className="d-flex align-items-center">
                       <button 
                         className="btn btn-sm cart-btn"
                         style={buttonStyle}
-                        onClick={() => decreaseQuantity(1)}
-                      >
+                        onClick={() => decreaseQuantity(item._id)}
+                        >
                         -
                       </button>
                       <input 
                         type="text" 
                         className="form-control mx-2 text-center" 
-                        value={product1Quantity} 
+                        value={item.quantity}
                         readOnly 
                         style={{width: '50px', border: '1px solid #d2b48c'}}
                       />
                       <button 
                         className="btn btn-sm cart-btn"
                         style={buttonStyle}
-                        onClick={() => increaseQuantity(1)}
-                      >
+                        onClick={() => increaseQuantity(item._id)}
+                        >
                         +
                       </button>
                     </div>
                   </td>
-                  <td className="align-middle text-right">₹{calculateTotal(1080.00, product1Quantity)}</td>
+                  <td className="align-middle text-right">₹{calculateTotal(item.productId?.costPrice || 0, item.quantity)}</td>
                   <td className="align-middle text-right">
-                    <button className="btn btn-link cart-btn" style={buttonStyle}>x</button>
+                    <button className="btn btn-link cart-btn" style={buttonStyle} onClick={() => removeItem(item._id)}>x</button>
                   </td>
                 </tr>
-                <tr className="border-bottom">
-                  <td>
-                    <img src={cart2} alt="Product 2" className="img-fluid" style={{maxWidth: '100px'}} />
-                  </td>
-                  <td className="align-middle">Product 2</td>
-                  <td className="align-middle">₹4900.00</td>
-                  <td className="align-middle">
-                    <div className="d-flex align-items-center">
-                      <button 
-                        className="btn btn-sm cart-btn"
-                        style={buttonStyle}
-                        onClick={() => decreaseQuantity(2)}
-                      >
-                        -
-                      </button>
-                      <input 
-                        type="text" 
-                        className="form-control mx-2 text-center" 
-                        value={product2Quantity} 
-                        readOnly 
-                        style={{width: '50px', border: '1px solid #d2b48c'}}
-                      />
-                      <button 
-                        className="btn btn-sm cart-btn"
-                        style={buttonStyle}
-                        onClick={() => increaseQuantity(2)}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </td>
-                  <td className="align-middle text-right">₹{calculateTotal(4900.00, product2Quantity)}</td>
-                  <td className="align-middle text-right">
-                    <button className="btn btn-link cart-btn" style={buttonStyle}>x</button>
-                  </td>
-                </tr>
+             ))
+            )}
               </tbody>
             </table>
           </div>
   
           <div className="d-flex justify-content-between mt-4">
             <div>
-              <button 
+              {/* <button 
                 className="btn rounded-pill px-4 py-2 cart-btn" 
                 style={{...buttonStyle, backgroundColor: '#ffffff', color: '#CD853F'}}
               >
                 Update Cart
-              </button>
+              </button> */}
             </div>
             <div>
               <button 
@@ -203,27 +219,52 @@ function Cart() {
             <div className="col-md-6">
               <div className="card">
                 <div className="card-body">
+              
                   <h4 className="card-title">CART TOTALS</h4>
-                  <div className="d-flex justify-content-between mt-4">
-                    <span>Subtotal</span>
-                    <span>₹{calculateTotal(1080.00, product1Quantity + product2Quantity)}</span>
-                  </div>
+                    <div className="mt-4">
+                          {cartItems.length === 0 ? (
+                            <p>Cart is empty</p>
+                          ) : (
+                            <div className="d-flex justify-content-between mb-2">
+                              <span>Subtotal</span>
+                              <span>
+                                ₹
+                                {cartItems.reduce((acc, item) => {
+                                  return acc + (item.costPrice || 0) * item.quantity;
+                                }, 0).toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+
                   <hr />
                   <div className="d-flex justify-content-between">
-                    <span>Total</span>
-                    <span>₹{calculateTotal(2780.00, product1Quantity + product2Quantity)}</span>
-                  </div>
+  <span>Total</span>
+  <span>
+    ₹
+    {cartItems.reduce((acc, item) => {
+      return acc + (item.costPrice || 0) * item.quantity;
+    }, 0).toFixed(2)}
+  </span>
+</div>
+
                   <div className="d-grid gap-2 mt-4">
                     <Link to="/Checkout" style={{ textDecoration: "none", color: "inherit" }}>
                     <button 
-                      className="btn btn-block rounded-pill py-3 cart-btn"
-                      style={{...buttonStyle, backgroundColor: '#ffffff', color: '#CD853F'}}
-                    >
-                      Proceed To Checkout
-                    </button>
+  className="btn btn-block rounded-pill py-3 cart-btn"
+  style={{ ...buttonStyle, backgroundColor: '#ffffff', color: '#CD853F' }}
+  onClick={handleCheckout}
+>
+  Proceed To Checkout
+</button>
+
+
                     </Link>
                   </div>
+               
                 </div>
+             
               </div>
             </div>
           </div>

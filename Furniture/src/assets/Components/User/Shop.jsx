@@ -24,6 +24,14 @@ function Shop() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const user = JSON.parse(localStorage.getItem("user"));
+  console.log("User from localStorage:", user);
+  const userId = user?.id;
+  console.log("UserId from localStorage:", userId);
+  
+
+
+  
   //Pagination
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -59,6 +67,28 @@ function Shop() {
   }, [currentPage]);
 
   //Add To Cart
+  const addToCart = async (productId, costPrice, productImage) => {
+    if (!userId) {
+      alert("Please log in to add items to cart.");
+      return;
+    }
+  
+    try {
+      await axios.post("http://localhost:5000/api/Cart/add", {
+        userId,
+        productId,
+        quantity: 1,
+        productImage,
+        costPrice,
+      });
+  
+      alert("Item added to cart!");
+    } catch (error) {
+      console.error("Add to cart error:", error);
+      alert("Failed to add item to cart.");
+    }
+  };
+  
 
   
 
@@ -242,8 +272,7 @@ function Shop() {
                         ₹{product.salePrice}
                       </small>
                     </div>
-                    <Link to="/Cart" style={{ textDecoration: "none", color: "inherit" }}>
-                      <button
+                    <button
                         className="mt-5"
                         style={{
                           border: "1px solid #d2b48c",
@@ -262,11 +291,12 @@ function Shop() {
                           e.target.style.backgroundColor = "white";
                           e.target.style.color = "black";
                         }}
+                        onClick={() => addToCart(product._id, product.costPrice, product.productImage)} 
                       >
                         <span className="me-1">Add</span>
                         <i className="bi bi-cart-plus"></i>
                       </button>
-                    </Link>
+
                   </div>
                 </Link>
               </div>
