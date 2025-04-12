@@ -69,17 +69,35 @@ function Address() {
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+  
     if (validateForm()) {
-      // Save address logic here
-      console.log('Form data submitted:', formData);
-      
-      // Navigate to checkout page
+      const user = JSON.parse(localStorage.getItem("user"));
+      const userId = user?.id; 
+      console.log("Address id",userId);// or user.id depending on how you're storing it
+  
+      // Get existing addresses from localStorage or start with an empty array
+      const existingAddresses = JSON.parse(localStorage.getItem('addresses')) || [];
+  
+      // Add userId to form data
+ const newAddress = {
+      ...formData,
+      userId: user?.id,
+      id: Date.now(), // Unique ID based on timestamp
+    }  
+      // Add new address to the array
+      const updatedAddresses = [...existingAddresses, newAddress];
+  
+      // Save back to localStorage
+      localStorage.setItem('addresses', JSON.stringify(updatedAddresses));
+  
+      // Navigate to Checkout page
       navigate('/Checkout');
     } else {
       console.log('Form has errors');
     }
   };
+  
+  
 
   return (
     <div className="container me-5 mt-5 pt-5">

@@ -12,16 +12,50 @@ function Checkout() {
   const [cartItems, setCartItems] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [paymentError, setPaymentError] = useState('');
+  const [addressError, setAddressError] = useState('');
   const navigate = useNavigate();
+  const [userAddresses, setUserAddresses] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState(null);
 
+
+
+//Address
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    const allAddresses = JSON.parse(localStorage.getItem('addresses')) || [];
+    const filteredAddresses = allAddresses.filter(addr => addr.userId === user?.id);
+    setUserAddresses(filteredAddresses);
+    
+  }, []);
+
+  
+  const handleDelete = (id) => {
+    const updatedAddresses = userAddresses.filter((addr) => addr.id !== id);
+    setUserAddresses(updatedAddresses);
+    localStorage.setItem('addresses', JSON.stringify(updatedAddresses));
+  };
+  
+  const handleSelectAddress = (addressId) => {
+    // Toggle selected address
+    if (selectedAddress === addressId) {
+      setSelectedAddress(null); // Deselect if clicked again
+    } else {
+      setSelectedAddress(addressId);
+    }
+  };
   // Fetch cart items from localStorage instead of DB
   useEffect(() => {
     const storedCart = localStorage.getItem('checkoutCart');
     if (storedCart) {
       setCartItems(JSON.parse(storedCart));
     }
-  }, []);
+  
+   
+    }, []);
+ 
 
+  
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => total + (item.costPrice * item.quantity), 0).toFixed(2);
   };
@@ -32,6 +66,13 @@ function Checkout() {
   };
 
   const handlePlaceOrder = async () => {
+
+    if (!selectedAddress) {
+      setAddressError("Please select a shipping address.");
+      return;
+    }
+    setAddressError("");
+
     if (!paymentMethod) {
       setPaymentError("Please select a payment method.");
       return;
@@ -63,25 +104,43 @@ function Checkout() {
     }
   };
   
+  //Address
+  
 
   return (
     <div className="container mt-5 pt-5">
       <div className="row">
       <div className="col-md-6">
-          <h4>Select Shipping Address</h4>
-          
-          <div className="address-box">
-            <p className="mb-1">Nirali Akbari,</p>
-            <p className="mb-1">8849274162,</p>
-            <p className="mb-1">BackBone park-9,301,Shyam Apartment,</p>
-            <p className="mb-1">Rajkot,</p>
-            <p className="mb-0">Select State - 360002</p>
-          </div>
-          
-          <Link to="/Address" style={{ textDecoration: "none", color: "inherit" }}>
-            <button className="btn light-brown-btn mb-4">Add New Address</button>
-          </Link>
-        </div>
+              <h4>Select Shipping Address</h4>
+          {addressError && <div className="text-danger mb-3">{addressError}</div>}
+
+              {userAddresses.length > 0 ? (
+                userAddresses.map((address, index) => (
+                  <div key={index} className={`address-box mb-3 ${selectedAddress === address.id ? 'border border-primary' : ''}`} onClick={() => handleSelectAddress(address.id)}>
+                  <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <p className="mb-1">{address.firstName} {address.lastName},</p>
+                  <p className="mb-1">{address.phone},</p>
+                  <p className="mb-1">{address.streetAddress}{address.apartment ? `, ${address.apartment}` : ''},</p>
+                  <p className="mb-1">{address.city},</p>
+                  <p className="mb-0">{address.state} - {address.pinCode}</p>
+                </div>
+                
+                <button className="btn btn-danger mt-2" onClick={() => handleDelete(address.id)}>
+                  Delete
+                </button>
+              </div>
+                      </div>
+                ))
+              ) : (
+                <p>No saved addresses found.</p>
+              )}
+
+              <Link to="/Address" style={{ textDecoration: "none", color: "inherit" }}>
+                <button className="btn light-brown-btn mb-4">Add New Address</button>
+              </Link>
+            </div>
+
 
 
         <div className="col-md-6">

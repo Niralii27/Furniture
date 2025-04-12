@@ -34,7 +34,9 @@ const UpdateOffer = () => {
                         maxDiscountAmount: data.maxDiscountAmount,
                         minDiscountAmount: data.minDiscountAmount,
                         startDate: data.startDate.slice(0, 10),
-                        endDate: data.endDate.slice(0, 10)
+                        endDate: data.endDate.slice(0, 10),
+                        productId: data.productId || "",   // If offer data has productId
+                        userId: data.userId || ""          // If offer data has userId
                     });
                 })
                 .catch(err => {
@@ -45,7 +47,18 @@ const UpdateOffer = () => {
                     setLoading(false);
                 });
         }
+    
+        // Fetch products
+        axios.get("http://localhost:5000/api/product/view-products")
+            .then(res => setProducts(res.data))
+            .catch(err => console.error("Error fetching products:", err));
+    
+        // Fetch users
+        axios.get("http://localhost:5000/api/user/view-users")
+            .then(res => setUsers(res.data))
+            .catch(err => console.error("Error fetching users:", err));
     }, [offerId]);
+    
 
     const handleChange = (e) => {
         const { name, value } = e.target;

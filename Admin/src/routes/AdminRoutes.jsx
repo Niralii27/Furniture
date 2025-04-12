@@ -33,6 +33,10 @@ import Categories from "../pages/admin/Categories";
 import UpdateProduct from "../pages/admin/UpdateProduct";
 import UserDetails from "../pages/admin/UserDetails";
 import UpdateOrder from "../pages/admin/UpdateOrder";
+// import ContactList from "../pages/admin/Contacts";
+import AddContact from "../pages/admin/AddContact";
+import UpdateContact from "../pages/admin/UpdateContact";
+import Contacts from "../pages/admin/Contacts";
 
 const AdminRoutes = () => {
   return (
@@ -82,7 +86,11 @@ const AdminRoutes = () => {
 
         <Route path="site-settings" element={<SiteSettings />} />
 
-        
+        <Route path="contacts" element={<Contacts />} />
+        <Route path="add-contact" element={<AddContact />} />
+        <Route path="update-contact" element={<UpdateContact />} />
+
+
       </Route>
     </Routes>
   );
