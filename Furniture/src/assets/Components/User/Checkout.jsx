@@ -66,20 +66,52 @@ function Checkout() {
   };
 
   const handlePlaceOrder = async () => {
-
     if (!selectedAddress) {
       setAddressError("Please select a shipping address.");
       return;
     }
     setAddressError("");
-
+  
     if (!paymentMethod) {
       setPaymentError("Please select a payment method.");
       return;
     }
   
+    const user = JSON.parse(localStorage.getItem("user"));
+    const address = userAddresses.find((a) => a.id === selectedAddress);
+    const subtotal = cartItems.reduce((acc, item) => acc + item.costPrice * item.quantity, 0);
+    const shipping = 50;
+    const total = subtotal + shipping;
+  
+    const orderData = {
+      userId: user.id,
+      orderDate: new Date(),
+      products: cartItems.map((item) => ({
+        productId: item.productId._id,
+        quantity: item.quantity,
+        costPrice: item.costPrice,
+        productImage: item.productImage,
+      })),
+      firstName: address.firstName,
+      lastName: address.lastName,
+      address: `${address.streetAddress}${address.apartment ? `, ${address.apartment}` : ''}`,
+      city: address.city,
+      state: address.state,
+      pinCode: address.pinCode,
+      phone: address.phone,
+      shippingCharge: shipping,
+      total: total,
+      payment_mode: paymentMethod,
+      status: "Pending",
+    };
+  
     try {
-      // Show centered thank you popup with emoji 🎉
+      console.log("Sending orderData", orderData); // 👈 Add this before axios.post
+
+      // 👇 Insert into Order table
+      await axios.post("http://localhost:5000/api/Order/add-order", orderData);
+  
+      // ✅ Thank you popup
       await Swal.fire({
         title: '🎉 Thank You!',
         text: 'Your order has been placed successfully!',
@@ -88,10 +120,10 @@ function Checkout() {
         confirmButtonColor: '#CD853F',
       });
   
-      // Navigate after confirmation
+      // 🛒 Navigate back to shop
       navigate('/Shop', { state: { cartItems } });
   
-      // Clear the cart
+      // 🧹 Clear cart
       await Promise.all(
         cartItems.map((item) =>
           axios.delete(`http://localhost:5000/api/Cart/remove/${item._id}`)
@@ -99,12 +131,14 @@ function Checkout() {
       );
       setCartItems([]);
     } catch (error) {
-      console.error("Error placing order:", error);
+      console.error("Error placing order:", error.response?.data || error.message);
       alert("Something went wrong!");
     }
   };
   
-  //Address
+  
+ 
+
   
 
   return (

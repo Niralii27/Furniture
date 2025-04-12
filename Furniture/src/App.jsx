@@ -1,8 +1,8 @@
-import { useState } from 'react'
+//import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+//import reactLogo from './assets/react.svg'
+//import viteLogo from '/vite.svg'
 import './App.css'
 import Home from './assets/Components/User/Home'
 import Navbar from './assets/Components/User/Navbar'
@@ -22,7 +22,7 @@ import Login from './assets/Components/User/Login'
 import Review from './assets/Components/User/Review'
 
 function App() {
-  const [count, setCount] = useState(0)
+  //const [count, setCount] = useState(0)
 
   return (
     <>
@@ -38,7 +38,7 @@ function App() {
       <Route exact path="/Wishlist" element={<Wishlist />} />
       <Route exact path="/Account" element={<Account />} />
       <Route exact path="/Orders" element={<Orders />} />
-      <Route exact path="/OrderDetails" element={<OrderDetails />} />
+      <Route exact path="/OrdersDetails/:id" element={<OrderDetails />} />
       <Route exact path="/ProductDetails/:id" element={<ProductDetails />} />
       <Route exact path="/Checkout" element={<Checkout />} />
       <Route exact path="/Address" element={<Address />} />

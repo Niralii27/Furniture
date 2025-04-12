@@ -5,15 +5,24 @@ const router = express.Router();
 
 // Add a new order
 router.post("/add-order", async (req, res) => {
+  console.log("Incoming order:", req.body); // Logs the full incoming data
+
   try {
-    const {userId,orderDate,products,lastName,address,city,state,pinCode,phone,shippingCharge,status} = req.body;
+    const {
+      userId, orderDate, products, firstName, lastName,
+      address, city, state, pinCode, phone,
+      shippingCharge, total, payment_mode, status
+    } = req.body;
 
     // Basic validation
-    if (!userId || !orderDate ||!products ||!firstName ||!lastName ||!address ||!city ||!state ||!pinCode ||!phone || shippingCharge == null ) {
+    if (!userId || !orderDate || !products || !firstName || !lastName || !address ||
+        !city || !state || !pinCode || !phone || shippingCharge == null ||
+        !total || !payment_mode) {
       return res.status(400).json({ error: "Required fields are missing." });
     }
 
-    const newOrder = new Order({userId,
+    const newOrder = new Order({
+      userId,
       orderDate,
       products,
       firstName,
@@ -24,6 +33,8 @@ router.post("/add-order", async (req, res) => {
       pinCode,
       phone,
       shippingCharge,
+      total,
+      payment_mode,
       status: status || "Pending",
     });
 
@@ -34,10 +45,14 @@ router.post("/add-order", async (req, res) => {
   }
 });
 
+
 // Get all orders
 router.get("/view-order", async (req, res) => {
+
   try {
     const orders = await Order.find().populate("userId").populate("products.productId");
+    // console.log("Orders being sent:", orders);
+
     res.status(200).json(orders);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -71,6 +86,8 @@ router.put("/update-order/:id", async (req, res) => {
       pinCode,
       phone,
       shippingCharge,
+      total,
+      payment_mode,
       status,
     } = req.body;
 
@@ -88,6 +105,8 @@ router.put("/update-order/:id", async (req, res) => {
         pinCode,
         phone,
         shippingCharge,
+        total,
+        payment_mode,
         status,
       },
       { new: true }

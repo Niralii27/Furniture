@@ -1,10 +1,42 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
 import order1 from '../../images/cart1.png';
 
 function OrderDetails() {
+  const { id } = useParams(); // orderId from URL
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Fetch order details
+  useEffect(() => {
+    const fetchOrderDetails = async () => {
+      try {
+        const response = await axios.get(`http://localhost:5000/api/Order/view-order/${id}`);
+        console.log(response.data); // Check the response in the console
+        if (response.status === 200) {
+          setOrder(response.data);
+        }
+      } catch (err) {
+        setError("Failed to fetch order details.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (id) {
+      fetchOrderDetails();
+    }
+  }, [id]);
+
+  // Loading and error state
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>{error}</p>;
   return (
-    <div className="container mt-4 mb-5">
+    <div className="container mt-5 pt-4 mb-5">
       {/* Breadcrumb */}
       <nav className="d-flex justify-content-between">
         <ol className="breadcrumb">
@@ -19,8 +51,8 @@ function OrderDetails() {
       <div className="card mb-4">
         <div className="card-body d-flex justify-content-between align-items-center">
           <div>
-            <h5 className="mb-2">Order# 7 <span className="badge bg-primary">Pending</span></h5>
-            <p className="mb-0 text-muted">Order Date: 27-07-2025</p>
+            <h5 className="mb-2">Order# {order?._id} <span className="badge bg-primary">{order?.status}</span></h5>
+            <p className="mb-0 text-muted">Order Date: {new Date(order?.orderDate).toLocaleDateString()}</p>
           </div>
           <button className="btn text-white" style={{ backgroundColor: '#D2B48C' }}>Re-order</button>
         </div>
@@ -32,9 +64,9 @@ function OrderDetails() {
         <div className="col-md-4">
           <div className="card p-3">
             <h5 className="fw-bold">Customer & Order</h5>
-            <p><strong>Name:</strong> Nirali Akbari</p>
-            <p><strong>Phone:</strong> +91 8849274162</p>
-            <p><strong>Email:</strong> akbarinirali27@gmail.com</p>
+            <p><strong>Name:</strong> {order?.firstName} {order?.lastName}</p>
+            <p><strong>Phone:</strong> {order?.phone}</p>
+            <p><strong>Email:</strong> {order?.userId?.email}</p>
           </div>
         </div>
 
@@ -42,10 +74,10 @@ function OrderDetails() {
         <div className="col-md-4">
           <div className="card p-3">
             <h5 className="fw-bold">Shipping Address</h5>
-            <p>Street: Backbone Park-9, 301, Shyam Apartment</p>
-            <p>City: Rajkot</p>
-            <p>State: Gujarat</p>
-            <p>Pin code: 360001</p>
+            <p>Street:  {order?.address}</p>
+            <p>City: {order?.city}</p>
+            <p>State: {order?.state}</p>
+            <p>Pin code: {order?.pinCode}</p>
           </div>
         </div>
 
@@ -53,10 +85,10 @@ function OrderDetails() {
         <div className="col-md-4">
           <div className="card p-3">
             <h5 className="fw-bold">Billing Address</h5>
-            <p>Street: Backbone Park-9, 301, Shyam Apartment</p>
-            <p>City: Rajkot</p>
-            <p>State: Gujarat</p>
-            <p>Pin code: 360001</p>
+            <p>Street: {order?.address}</p>
+            <p>City: {order?.city}</p>
+            <p>State: {order?.state}</p>
+            <p>Pin code: {order?.pinCode}</p>
           </div>
         </div>
       </div>
@@ -76,21 +108,25 @@ function OrderDetails() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
+              {order?.products?.map((item, index) => (
+
+              <tr key={index}>
                   <td>
                     <img
-                      src={order1}
-                      width="50"
+                       src={item?.productId?.productImage ? `http://127.0.0.1:5000/public/uploads/${item.productId.productImage}` : order1}
+                       width="50"
                       className="me-2"
                       alt="Orange"
                     />
-                    Chair round
+
                   </td>
-                  <td>3</td>
-                  <td>₹324.00</td>
-                  <td>₹972.00</td>
+                  <td>{item?.quantity}</td>
+                  <td>₹{item?.productId?.costPrice}</td>
+                  <td>₹{item?.quantity * item?.productId?.costPrice}</td>
                   
                 </tr>
+                 ))}
+
               </tbody>
             </table>
           </div>
@@ -98,15 +134,15 @@ function OrderDetails() {
           {/* Order Summary */}
           <div className="d-flex justify-content-between">
             <p className="fw-bold">Subtotal:</p>
-            <p>₹324.00</p>
+            <p>₹{order?.total - order?.shippingCharge}</p>
           </div>
           <div className="d-flex justify-content-between">
             <p className="fw-bold">Delivery Charge:</p>
-            <p>₹50.00</p>
+            <p>₹{order?.shippingCharge}</p>
           </div>
           <div className="d-flex justify-content-between">
             <h5 className="fw-bold">Total:</h5>
-            <h5>₹374.00</h5>
+            <h5>₹{order?.total}</h5>
           </div>
         </div>
       </div>
