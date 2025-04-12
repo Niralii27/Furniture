@@ -31,6 +31,8 @@ import { NavLink } from "react-router-dom";
 //import person1 from '../../images/person_4.jpg';
 
 function Navbar() {
+
+  
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
       

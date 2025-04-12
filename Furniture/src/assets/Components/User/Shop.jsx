@@ -24,6 +24,7 @@ function Shop() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+
   const user = JSON.parse(localStorage.getItem("user"));
   console.log("User from localStorage:", user);
   const userId = user?.id;
@@ -88,8 +89,39 @@ function Shop() {
       alert("Failed to add item to cart.");
     }
   };
-  
 
+  //WishList 
+  
+  const [wishlist, setWishlist] = useState(() => {
+    const saved = localStorage.getItem(`wishlist_${userId}`) || "[]";
+    return JSON.parse(saved);
+  });
+  
+  
+  // Function to check if a product is wishlisted
+  const isProductWishlisted = (productId) => {
+    return wishlist.includes(productId);
+  };
+  
+  // Toggle wishlist for a specific product
+  const handleWishlistToggle = (productId) => {
+    let updatedWishlist;
+    if (wishlist.includes(productId)) {
+      // Remove from wishlist
+      updatedWishlist = wishlist.filter(id => id !== productId);
+    } else {
+      // Add to wishlist
+      updatedWishlist = [...wishlist, productId];
+    }
+  
+    // Update localStorage & state
+    localStorage.setItem(`wishlist_${userId}`, JSON.stringify(updatedWishlist));
+    setWishlist(updatedWishlist);
+  };
+  
+  
+  
+  
   
 
   return (
@@ -239,9 +271,14 @@ function Shop() {
                   <span className="badge bg-warning text-dark py-2 px-3">SAVE {product.discount || 0}%</span>
                 </div>
                 <Link to="/Wishlist">
-                  <button className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn">
-                    <i className="bi bi-heart-fill text-danger"></i>
-                  </button>
+                <button
+  className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn"
+  onClick={() => handleWishlistToggle(product._id)}
+>
+  <i className={`bi ${isProductWishlisted(product._id) ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
+</button>
+
+
                 </Link>
                 <img
                   src={product.productImage ? `http://127.0.0.1:5000/public/uploads/${product.productImage}` : "https://via.placeholder.com/50"} 

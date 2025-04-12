@@ -1,9 +1,6 @@
-import React from 'react';
-import orange from '../../images/cart1.png'; // Update with your image paths
-import chocolate from '../../images/cart2.png';
-import beans from '../../images/product-1.jpg';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import contactimg from '../../images/contact.jpg';
-
 
 function Wishlist() {
   // Button styles
@@ -38,6 +35,64 @@ function Wishlist() {
     maxWidth: '70px',
     marginRight: '15px',
   };
+
+  const [wishlistItems, setWishlistItems] = useState([]);
+const user = JSON.parse(localStorage.getItem("user"));
+const userId = user?.id;
+
+useEffect(() => {
+  const fetchWishlistItems = async () => {
+    if (!userId) {
+      console.warn("User ID not found. Cannot load wishlist.");
+      return;
+    }
+
+    const savedWishlist = JSON.parse(localStorage.getItem(`wishlist_${userId}`)) || [];
+
+    if (savedWishlist.length === 0) {
+      console.log("No wishlist found for this user.");
+      return;
+    }
+
+    try {
+      const response = await axios.get("http://localhost:5000/api/Product/view-product");
+      const allProducts = response.data;
+
+      const filtered = allProducts.filter(product => savedWishlist.includes(product._id));
+      setWishlistItems(filtered);
+    } catch (error) {
+      console.error("Error fetching wishlist items:", error);
+    }
+  };
+
+  fetchWishlistItems();
+}, [userId]);
+
+const handleDelete = (productId) => {
+  const updatedWishlist = wishlistItems.filter((item) => item._id !== productId);
+  setWishlistItems(updatedWishlist);
+
+  const savedWishlist = JSON.parse(localStorage.getItem(`wishlist_${userId}`)) || [];
+  const newWishlist = savedWishlist.filter((id) => id !== productId);
+  localStorage.setItem(`wishlist_${userId}`, JSON.stringify(newWishlist));
+};
+
+const handleAddToCart = async (product) => {
+  try {
+    await axios.post("http://localhost:5000/api/Cart/add", {
+      userId,
+      productId: product._id,
+      quantity: 1,
+      productImage: product.productImage,
+      costPrice: product.costPrice,
+    });
+    alert("Item moved to cart!");
+  } catch (error) {
+    console.error("Add to cart error:", error);
+    alert("Failed to add item to cart.");
+  }
+};
+
 
   return (
     <div style={{ backgroundColor: "#FAFDFF"}}>
@@ -80,39 +135,26 @@ function Wishlist() {
               </tr>
           </thead>
           <tbody>
-            <tr style={{borderBottom: '1px solid #dee2e6'}}>
+          {wishlistItems.length === 0 ? (
+    <tr>
+      <td colSpan="3" className="text-center py-5">No items in your wishlist.</td>
+    </tr>
+  ) : (
+    wishlistItems.map((item) => (
+            <tr key={item._id} style={{borderBottom: '1px solid #dee2e6'}}>
               <td style={productCellStyle}>
-                <img src={orange} alt="Orange" style={productImageStyle} />
-                <span>Orange 2 kg</span>
+              <img src={item.productImage ? `http://127.0.0.1:5000/public/uploads/${item.productImage}` : "https://via.placeholder.com/50"}  style={productImageStyle}  />
+              <span>{item.name}</span>
               </td>
-              <td style={{verticalAlign: 'middle'}}>₹1080.00</td>
+              <td style={{verticalAlign: 'middle'}}>₹{item.costPrice}</td>
               <td style={{verticalAlign: 'middle'}}>
-                <button className="btn ms-4 me-2 light-brown-btn" >Add to cart</button>
-                <button className="btn" style={deleteButtonStyle}>Delete</button>
+                <button className="btn ms-4 me-2 light-brown-btn" onClick={() => handleAddToCart(item)}>Add to cart</button>
+                <button className="btn" style={deleteButtonStyle}  onClick={() => handleDelete(item._id)}>Delete</button>
               </td>
             </tr>
-            <tr style={{borderBottom: '1px solid #dee2e6'}}>
-              <td style={productCellStyle}>
-                <img src={chocolate} alt="Chocolate" style={productImageStyle} />
-                <span>Chocolate</span>
-              </td>
-              <td style={{verticalAlign: 'middle'}}>₹4200.50</td>
-              <td style={{verticalAlign: 'middle'}}>
-                <button className="btn ms-4 me-3 light-brown-btn">Add to cart</button>
-                <button className="btn" style={deleteButtonStyle}>Delete</button>
-              </td>
-            </tr>
-            <tr style={{borderBottom: '1px solid #dee2e6'}}>
-              <td style={productCellStyle}>
-                <img src={beans} alt="Beans" style={productImageStyle} />
-                <span>Beans - Broad (Loose), 500 g</span>
-              </td>
-              <td style={{verticalAlign: 'middle'}}>₹1700.00</td>
-              <td style={{verticalAlign: 'middle'}}>
-                <button className="btn ms-4 me-3 light-brown-btn">Add to cart</button>
-                <button className="btn" style={deleteButtonStyle}>Delete</button>
-              </td>
-            </tr>
+           
+          ))
+        )}
           </tbody>
         </table>
       </div>
