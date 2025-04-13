@@ -2,17 +2,24 @@ import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 
 function Account() {
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  console.log("Logged-in user:", user);
+
+
   // Form state
   const [formData, setFormData] = useState({
-    firstName: "Nirali",
-    lastName: "Akbari",
-    email: "akbarinirali27@gmail.com",
-    phone: "8849274162",
-    userImage: null,
-    currentPassword: "",
+    firstName: user.fullname || "",
+    lastName: user.lastName || "",
+    email: user.email || "",
+    phone: user.phone || "",
+    userImage: user.userImage || "",    
+    currentPassword: user.password || "",
     newPassword: "",
     confirmPassword: ""
+    
   });
+  console.log("Form Data:", formData); // Log formData to check userImage value
 
   // Validation state
   const [errors, setErrors] = useState({});
@@ -72,14 +79,14 @@ function Account() {
     }
     
     // File validation
-    if (formData.userImage) {
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-      if (!allowedTypes.includes(formData.userImage.type)) {
-        newErrors.userImage = "Please select a valid image file (JPEG, PNG, or GIF)";
-      } else if (formData.userImage.size > 5 * 1024 * 1024) { // 5MB limit
-        newErrors.userImage = "Image size should be less than 5MB";
-      }
-    }
+    // if (formData.userImage) {
+    //   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    //   if (!allowedTypes.includes(formData.userImage.type)) {
+    //     newErrors.userImage = "Please select a valid image file (JPEG, PNG, or GIF)";
+    //   } else if (formData.userImage.size > 5 * 1024 * 1024) { // 5MB limit
+    //     newErrors.userImage = "Image size should be less than 5MB";
+    //   }
+    // }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -112,32 +119,109 @@ function Account() {
   };
 
   // Handle profile update
-  const handleProfileUpdate = (e) => {
+  const handleProfileUpdate = async (e) => {
     e.preventDefault();
-    if (validateProfileForm()) {
-      // Submit form data
-      console.log("Profile updated:", formData);
-      alert("Profile updated successfully!");
+  
+    if (!validateProfileForm()) return;
+  
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append("fullname", formData.firstName);
+      formDataToSend.append("lastName", formData.lastName);
+      formDataToSend.append("email", formData.email);
+      formDataToSend.append("phone", formData.phone);
+      formDataToSend.append("password", formData.newPassword || formData.currentPassword);
+  
+      let isImageUpdated = false;
+  
+      if (formData.userImage instanceof File) {
+        formDataToSend.append("userImage", formData.userImage);
+        isImageUpdated = true;
+      }
+  
+      const response = await fetch(`http://localhost:5000/api/Login/update-user/${user._id}`, {
+        method: "PUT",
+        body: formDataToSend,
+      });
+  
+      const result = await response.json();
+  
+      console.log("Response from backend:", result); // helpful for debugging
+  
+      if (response.ok) {
+        alert("Profile updated successfully!");
+  
+        // Save updated user to localStorage
+        localStorage.setItem("user", JSON.stringify(result.user));
+  
+        // Update React state to reflect new data immediately
+        setFormData({
+          ...formData,
+          firstName: result.user.fullname || "",
+          lastName: result.user.lastName || "",
+          email: result.user.email || "",
+          phone: result.user.phone || "",
+          userImage: result.user.userImage || "",
+          currentPassword: result.user.password || "",
+          newPassword: "",
+          confirmPassword: ""
+        });
+  
+        // If a new image was uploaded, update the preview too
+        if (isImageUpdated && result.user.userImage) {
+          setImagePreview(`http://127.0.0.1:5000/public/uploads/${result.user.userImage}`);
+        }
+  
+      } else {
+        alert("Update failed: " + result.message);
+      }
+    } catch (error) {
+      console.error("Update error:", error);
+      alert("Something went wrong!");
     }
   };
+  
+  
+  
 
   // Handle password change
-  const handlePasswordChange = (e) => {
-    e.preventDefault();
-    if (validatePasswordForm()) {
-      // Submit password change
-      console.log("Password changed");
+  const handlePasswordChange = async (e) => {
+  e.preventDefault();
+
+  if (!validatePasswordForm()) return;
+
+  try {
+    const response = await fetch(`http://localhost:5000/api/Login/change-password/${user._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
       alert("Password changed successfully!");
-      // Reset password fields
       setFormData({
         ...formData,
         currentPassword: "",
         newPassword: "",
-        confirmPassword: ""
+        confirmPassword: "",
       });
       setPasswordErrors({});
+    } else {
+      alert("Error: " + result.message);
     }
-  };
+  } catch (error) {
+    console.error("Error changing password:", error);
+    alert("Something went wrong!");
+  }
+};
+
       
   return (
     <div className="container mt-4 pt-5">
@@ -185,6 +269,7 @@ function Account() {
                     <input 
                       type="text" 
                       className="form-control" 
+                      name="firstName"
                       style={{border: '1px solid #d2b48c'}} 
                       id="firstName" 
                       value={formData.firstName} 
@@ -237,7 +322,9 @@ function Account() {
                     <label htmlFor="userImage" className="form-label">User Image</label>
                     <div className="d-flex align-items-center">
                       <img
-                        src={imagePreview}
+                        src={formData.userImage ? 
+                          `http://127.0.0.1:5000/public/uploads/${formData.userImage}` :
+                          (imagePreview || "default-image.jpg")}
                         alt="User Avatar"
                         className="profile-avatar me-3"
                         style={{ width: '150px', height: '150px', objectFit: 'cover' }}

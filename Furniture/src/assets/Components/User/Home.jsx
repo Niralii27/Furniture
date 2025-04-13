@@ -7,14 +7,14 @@ import { Link } from "react-router-dom"
 
 import slider1 from '../../images/slider2.jpeg';
 import slider2 from '../../images/slider1.jpg';
-import product1 from '../../images/cart1.png';
-import product2 from '../../images/cart2.png';
-import product3 from '../../images/product-6.jpg';
-import product4 from '../../images/img1.jpg';
-import product5 from '../../images/product-2.jpeg';
-import product6 from '../../images/product-8.jpg';
-import product7 from '../../images/product4.png';
-import product8 from '../../images/product-5.jpeg';
+// import product1 from '../../images/cart1.png';
+// import product2 from '../../images/cart2.png';
+// import product3 from '../../images/product-6.jpg';
+// import product4 from '../../images/img1.jpg';
+// import product5 from '../../images/product-2.jpeg';
+// import product6 from '../../images/product-8.jpg';
+// import product7 from '../../images/product4.png';
+// import product8 from '../../images/product-5.jpeg';
 import selling1 from '../../images/Selling/selling1.jpg';
 import selling2 from '../../images/Selling/selling2.jpg';
 import selling3 from '../../images/Selling/selling3.jpg';

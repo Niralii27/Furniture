@@ -9,6 +9,18 @@ const Login = require("../models/Login");
 const router = express.Router();
 require("dotenv").config();
 
+// Multer Storage Configuration for User Images
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "public/uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage });
+
 // Email Transporter Configuration
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -22,10 +34,13 @@ const transporter = nodemailer.createTransport({
     try { 
             const {
               fullname,
+              lastName,
               email,
+              phone,
               password,
               role,
               status,
+              userImage,
             } = req.body;
         
             if (!fullname || !email || !password ) {
@@ -48,10 +63,13 @@ const transporter = nodemailer.createTransport({
             // Create new user
             const newUser = new UserSchema({
               fullname,
+              lastName,
               email,
+              phone,
               password,
               role: role || "user",
               status: status || "Inactive",
+              userImage,
               verificationToken,
 
             });
@@ -137,6 +155,68 @@ const transporter = nodemailer.createTransport({
       );
     }
   });
+
+  //Update Profile
+router.put("/update-user/:id", upload.single("userImage"), async (req, res) => {
+  try {
+    const { fullname, lastName, email, phone, password } = req.body;
+
+    // Fetch existing user first
+    const existingUser = await Login.findById(req.params.id);
+    if (!existingUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Build updated data
+    const updatedData = {
+      fullname,
+      lastName,
+      email,
+      phone,
+    };
+
+    // Update password only if it's not empty
+    if (password && password.trim() !== "") {
+      updatedData.password = password;
+    }
+
+    // Update image if a new one is uploaded
+    if (req.file) {
+      updatedData.userImage = req.file.filename;
+    }
+
+    const updatedUser = await Login.findByIdAndUpdate(req.params.id, updatedData, { new: true });
+
+    res.json({ message: "User updated", user: updatedUser });
+  } catch (err) {
+    console.error('Error updating user:', err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// update a Password
+router.put("/change-password/:id", async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await Login.findById(req.params.id);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Compare old password
+    if (user.password !== currentPassword) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    // Update to new password
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
 
   // Login Route
 router.post("/login", async (req, res) => {

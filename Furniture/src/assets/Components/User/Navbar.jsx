@@ -32,6 +32,8 @@ import { NavLink } from "react-router-dom";
 
 function Navbar() {
 
+  const user = JSON.parse(localStorage.getItem("user"));
+  
   
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
@@ -117,7 +119,10 @@ function Navbar() {
                 className="rounded-circle me-1" 
                 style={{ width: '30px', height: '30px', objectFit: 'cover' }}
               />
-             <span className="d-none d-md-inline text-muted ms-2">Nirali</span>
+              <span className="d-none d-md-inline text-muted ms-2">
+                {user?.fullname ? ` ${user.fullname}` : "Guest!"}
+              </span>
+             {/* <span className="d-none d-md-inline text-muted ms-2">Nirali</span> */}
 </button>
 <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="userDropdown">
   <li className="px-3 py-2 d-block d-md-none text-center">
