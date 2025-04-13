@@ -22,6 +22,7 @@ function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState([]);  // Store reviews
   const [error, setError] = useState('');  // Error state
+  const [canAddReview, setCanAddReview] = useState(false); // New state to track review eligibility
 
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -160,8 +161,38 @@ function ProductDetails() {
           }
         }, [id]);
         
-        
-        
+          // Check if the product is in the user's orders
+          useEffect(() => {
+            const checkProductInOrders = async () => {
+              try {
+                const response = await axios.get("http://localhost:5000/api/Order/view-order");
+                console.log("Orders fetched: ", response.data);
+                
+                const orders = response.data;
+          
+                const userOrders = orders.filter(
+                  (order) => order.userId && String(order.userId._id) === String(userId)
+                );
+          
+                console.log("Filtered orders for current user: ", userOrders);
+          
+                const productInOrder = userOrders.some((order) =>
+                  order.products.some((product) => String(product.productId._id) === String(id))
+                );
+          
+                console.log("Is product in user's orders: ", productInOrder);
+          
+                setCanAddReview(productInOrder);
+              } catch (err) {
+                console.error("Error checking orders:", err);
+              }
+            };
+          
+            if (userId) {
+              checkProductInOrders();
+            }
+          }, [userId, id]);
+          
 
   if (!product) return <div className="container pt-5">Loading...</div>;
 
@@ -218,9 +249,12 @@ function ProductDetails() {
       <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center">
         <h4 className="mt-5">Customer Reviews</h4>
-        <Link to={`/Review/${id}`} style={{ textDecoration: "none", color: "inherit" }}>
-        <button className="btn light-brown-btn">Add Review</button>
-      </Link>
+        {canAddReview && (
+  <Link to={`/Review/${id}`} style={{ textDecoration: "none", color: "inherit" }}>
+    <button className="btn light-brown-btn">Add Review</button>
+  </Link>
+)}
+
       </div>
 
       <p className="text-muted">You need to order first to give a review on this product!</p>
