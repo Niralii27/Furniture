@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 
 
@@ -23,6 +24,7 @@ function ProductDetails() {
   const [reviews, setReviews] = useState([]);  // Store reviews
   const [error, setError] = useState('');  // Error state
   const [canAddReview, setCanAddReview] = useState(false); // New state to track review eligibility
+  const navigate = useNavigate();
 
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -85,9 +87,10 @@ function ProductDetails() {
         //Add To Cart
         const addToCart = async (productId, costPrice, productImage) => {
           if (!userId) {
-            alert("Please log in to add items to cart.");
+            navigate("/login"); // Replace with your actual login route
             return;
           }
+          
         
           try {
             await axios.post("http://localhost:5000/api/Cart/add", {
