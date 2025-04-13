@@ -289,6 +289,10 @@ router.post("/login", async (req, res) => {
         fullname: user.fullname,
         email: user.email,
         role: user.role,
+        phone: user.phone,  // Include phone
+        lastName: user.lastName,  // Include lastName
+        userImage: user.userImage,  // Include userImage
+        password: user.password, 
       },
     });
   } catch (error) {

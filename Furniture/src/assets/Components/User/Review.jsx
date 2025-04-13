@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useParams } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';  // Import useNavigate
+import axios from "axios";
+
 
 const Review = () => {
+
+  const { id: productId } = useParams();
+  const navigate = useNavigate();  // Initialize navigate function
+
+  
+
   const [rating, setRating] = useState('');
   const [review, setReview] = useState('');
   const [touched, setTouched] = useState({
@@ -48,28 +58,50 @@ const Review = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setTouched({
-      rating: true,
-      review: true
-    });
-    
+    setTouched({ rating: true, review: true });
+  
     if (validate()) {
-      console.log({ rating, review });
-      // Add your submission logic here
-      setSubmitted(true);
+      const user = JSON.parse(localStorage.getItem("user"));
+      const userId = user?.id;
+    
+      const reviewData = {
+        rating: parseInt(rating),
+        review,
+        product: productId,  // renamed from productId to product
+        user: userId         // renamed from userId to user
+      };
+      console.log("Sending review data:", reviewData);
+
+      axios
+        .post("http://localhost:5000/api/Review/add-review", reviewData)
+        .then((res) => {
+          console.log("Review submitted:", res.data);
+          setSubmitted(true);
+    
+          setTimeout(() => {
+            setRating('');
+            setReview('');
+            setTouched({
+              rating: false,
+              review: false
+            });
+            setSubmitted(false);
+          }, 3000);
+
+          // Show success message, then navigate to the shop page
+          setTimeout(() => {
+            navigate('/shop');  // Navigate to Shop page after success message
+          }, 3000);  // Wait for 3 seconds before redirecting
       
-      // Reset form after successful submission
-      setTimeout(() => {
-        setRating('');
-        setReview('');
-        setTouched({
-          rating: false,
-          review: false
+        })
+        .catch((err) => {
+          console.error("Error submitting review:", err);
         });
-        setSubmitted(false);
-      }, 3000);
     }
+    
+    
   };
+  
 
   return (
     <div className="container mt-5 pt-5">

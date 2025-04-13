@@ -97,7 +97,8 @@ function Shop() {
     return JSON.parse(saved);
   });
   
-  
+  const [setWishlistCount] = useState(wishlist.length);
+
   // Function to check if a product is wishlisted
   const isProductWishlisted = (productId) => {
     return wishlist.includes(productId);
@@ -117,6 +118,8 @@ function Shop() {
     // Update localStorage & state
     localStorage.setItem(`wishlist_${userId}`, JSON.stringify(updatedWishlist));
     setWishlist(updatedWishlist);
+    setWishlistCount(updatedWishlist.length); // Update wishlist count after change
+
   };
   
   

@@ -32,6 +32,12 @@ import img3 from '../../images/img3.jpg';
 
 
 function Home() {
+
+  
+  const user = JSON.parse(localStorage.getItem("user"));
+  console.log("User from localStorage:", user);
+  const userId = user?.id;
+  console.log("UserId from localStorage:", userId);
   
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +61,9 @@ function Home() {
     axios
       .get("http://localhost:5000/api/Product/view-product")
       .then((response) => {
-        setProducts(response.data);
+        const filteredProducts = response.data.filter(product => product.discount > 2);
+
+        setProducts(filteredProducts);
       })
       .catch((error) => {
         console.error("Error fetching products:", error);
@@ -65,6 +73,61 @@ function Home() {
         setLoading(false);
       });
   };
+  
+//Add To Cart
+        const addToCart = async (productId, costPrice, productImage) => {
+          if (!userId) {
+            alert("Please log in to add items to cart.");
+            return;
+          }
+
+          try {
+            await axios.post("http://localhost:5000/api/Cart/add", {
+              userId,
+              productId,
+              quantity: 1,
+              productImage,
+              costPrice,
+            });
+
+            alert("Item added to cart!");
+          } catch (error) {
+            console.error("Add to cart error:", error);
+            alert("Failed to add item to cart.");
+          }
+        };
+
+//WishList 
+
+        const [wishlist, setWishlist] = useState(() => {
+          const saved = localStorage.getItem(`wishlist_${userId}`) || "[]";
+          return JSON.parse(saved);
+        });
+
+        const [setWishlistCount] = useState(wishlist.length);
+
+        // Function to check if a product is wishlisted
+        const isProductWishlisted = (productId) => {
+          return wishlist.includes(productId);
+        };
+
+        // Toggle wishlist for a specific product
+        const handleWishlistToggle = (productId) => {
+          let updatedWishlist;
+          if (wishlist.includes(productId)) {
+            // Remove from wishlist
+            updatedWishlist = wishlist.filter(id => id !== productId);
+          } else {
+            // Add to wishlist
+            updatedWishlist = [...wishlist, productId];
+          }
+
+          // Update localStorage & state
+          localStorage.setItem(`wishlist_${userId}`, JSON.stringify(updatedWishlist));
+          setWishlist(updatedWishlist);
+          setWishlistCount(updatedWishlist.length); // Update wishlist count after change
+
+        };
 
   // useEffect(() => {
   //   window.scrollTo(0, 0);
@@ -118,10 +181,14 @@ function Home() {
                           <span className="badge bg-warning text-dark py-2 px-3">SAVE {product.discount || 0}%</span>
                         </div>
                         <Link to="/Wishlist">
-                          <button className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn">
-                            <i className="bi bi-heart-fill text-danger"></i>
-                          </button>
-                        </Link>
+                                       <button
+                         className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn"
+                         onClick={() => handleWishlistToggle(product._id)}
+                       >
+                         <i className={`bi ${isProductWishlisted(product._id) ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
+                       </button>
+            
+                                       </Link>
                         <img
                           src={product.productImage ? `http://127.0.0.1:5000/public/uploads/${product.productImage}` : "https://via.placeholder.com/50"} 
                           className="card-img-top p-3"
@@ -152,29 +219,30 @@ function Home() {
                               </small>
                             </div>
                             <Link to="/Cart" style={{ textDecoration: "none", color: "inherit" }}>
-                              <button
-                                className="mt-5"
-                                style={{
-                                  border: "1px solid #d2b48c",
-                                  backgroundColor: "white",
-                                  color: "black",
-                                  padding: "8px 16px",
-                                  fontWeight: "bold",
-                                  cursor: "pointer",
-                                  transition: "background-color 0.3s ease, border-color 0.3s ease",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.target.style.backgroundColor = "#a67c52";
-                                  e.target.style.color = "white";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.target.style.backgroundColor = "white";
-                                  e.target.style.color = "black";
-                                }}
-                              >
-                                <span className="me-1">Add</span>
-                                <i className="bi bi-cart-plus"></i>
-                              </button>
+                            <button
+                        className="mt-5"
+                        style={{
+                          border: "1px solid #d2b48c",
+                          backgroundColor: "white",
+                          color: "black",
+                          padding: "8px 16px",
+                          fontWeight: "bold",
+                          cursor: "pointer",
+                          transition: "background-color 0.3s ease, border-color 0.3s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = "#a67c52";
+                          e.target.style.color = "white";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = "white";
+                          e.target.style.color = "black";
+                        }}
+                        onClick={() => addToCart(product._id, product.costPrice, product.productImage)} 
+                      >
+                        <span className="me-1">Add</span>
+                        <i className="bi bi-cart-plus"></i>
+                      </button>
                             </Link>
                           </div>
                         </Link>

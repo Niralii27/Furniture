@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from "react";
 import '../../css/header.css'; 
 import { Link } from "react-router-dom"
 import { NavLink } from "react-router-dom";
@@ -33,6 +33,26 @@ import { NavLink } from "react-router-dom";
 function Navbar() {
 
   const user = JSON.parse(localStorage.getItem("user"));
+
+  const handleLogout = () => {
+    localStorage.removeItem("user"); // Remove user data
+    window.location.href = "/Login"; // Redirect to Login
+  };
+
+  const [wishlistCount, setWishlistCount] = useState(0);
+
+  
+  useEffect(() => {
+    if (user) {
+      const userId = user.id;
+      // Fetch the wishlist from localStorage for this user
+      const wishlist = JSON.parse(localStorage.getItem(`wishlist_${userId}`)) || [];
+      setWishlistCount(wishlist.length); // Set the count of items
+    }
+  }, []);
+
+
+  
   
   
   return (
@@ -67,27 +87,27 @@ function Navbar() {
         <div className="collapse navbar-collapse" id="navbarContent">
           {/* Navigation Links */}
           <ul className="navbar-nav mx-auto mb-2 mb-lg-0">
-  <li className="nav-item">
-    <NavLink className="nav-link px-3" to="/Home" activeClassName="active-link">
-      Home
-    </NavLink>
-  </li>
-  <li className="nav-item">
-    <NavLink className="nav-link px-3" to="/Shop" activeClassName="active-link">
-      Shop
-    </NavLink>
-  </li>
-  <li className="nav-item">
-    <NavLink className="nav-link px-3" to="/ContactUs" activeClassName="active-link">
-      Contact
-    </NavLink>
-  </li>
-  <li className="nav-item">
-    <NavLink className="nav-link px-3" to="/About" activeClassName="active-link">
-      About
-    </NavLink>
-  </li>
-</ul>
+          <li className="nav-item">
+            <NavLink className="nav-link px-3" to="/Home" activeClassName="active-link">
+              Home
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink className="nav-link px-3" to="/Shop" activeClassName="active-link">
+              Shop
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink className="nav-link px-3" to="/ContactUs" activeClassName="active-link">
+              Contact
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink className="nav-link px-3" to="/About" activeClassName="active-link">
+              About
+            </NavLink>
+          </li>
+        </ul>
           
           {/* Search Bar */}
           <form className="d-flex me-auto search-form">
@@ -113,41 +133,66 @@ function Navbar() {
                 id="userDropdown" 
                 data-bs-toggle="dropdown"
               >
-               <img 
-                src="https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_960_720.png"
-                alt="User" 
-                className="rounded-circle me-1" 
+              <img
+                src={user?.userImage ? `http://127.0.0.1:5000/public/uploads/${user.userImage}` : "https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_960_720.png"}
+                alt="User"
+                className="rounded-circle me-1"
                 style={{ width: '30px', height: '30px', objectFit: 'cover' }}
               />
+
               <span className="d-none d-md-inline text-muted ms-2">
                 {user?.fullname ? ` ${user.fullname}` : "Guest!"}
               </span>
              {/* <span className="d-none d-md-inline text-muted ms-2">Nirali</span> */}
-</button>
-<ul className="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="userDropdown">
-  <li className="px-3 py-2 d-block d-md-none text-center">
-    <strong>Nirali</strong>
-  </li>
-  <li className="d-block d-md-none"><hr className="dropdown-divider m-0" /></li>
-  <li><Link className="dropdown-item py-2" to="/Account"><i className="fas fa-user me-2 text-brown"></i>Profile</Link></li>
-  <li><Link className="dropdown-item py-2" to="/Orders"><i className="fas fa-shopping-bag me-2 text-brown"></i>Orders</Link></li>
-  <li><hr className="dropdown-divider" /></li>
-  <li><Link className="dropdown-item py-2" to="/Login"><i className="fas fa-sign-out-alt me-2 text-brown"></i>Login</Link></li>
+            </button>
+            <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="userDropdown">
+              <li className="px-3 py-2 d-block d-md-none text-center">
+                <strong>Nirali</strong>
+              </li>
+              <li className="d-block d-md-none"><hr className="dropdown-divider m-0" /></li>
+              <li>
+              <Link
+                className="dropdown-item py-2"
+                to={localStorage.getItem("user") ? "/Account" : "/login"}
+              >
+                <i className="fas fa-user me-2 text-brown"></i>Profile
+              </Link>
+            </li>
+            <li>
+              <Link
+                className="dropdown-item py-2"
+                to={localStorage.getItem("user") ? "/Orders" : "/login"}
+              >
+                <i className="fas fa-shopping-bag me-2 text-brown"></i>Orders
+              </Link>
+            </li>
 
-  <li><Link className="dropdown-item py-2" to="/Login"><i className="fas fa-sign-out-alt me-2 text-brown"></i>Logout</Link></li>
-</ul>
-</div>
-            
+              <li><hr className="dropdown-divider" /></li>
+              <li><Link className="dropdown-item py-2" to="/Login"><i className="fas fa-sign-out-alt me-2 text-brown"></i>Login</Link></li>
+
+              <li>
+                <button className="dropdown-item py-2" onClick={handleLogout}>
+                  <i className="fas fa-sign-out-alt me-2 text-brown"></i>Logout
+                </button>
+              </li>
+            </ul>
+            </div>
+                        
             {/* Wishlist */}
-            <Link to="/Wishlist" className="btn position-relative ms-3">
-              <i className="far fa-heart fs-5 text-secondary"></i>
-              <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-brown">
-                2
-              </span>
-            </Link>
+           <Link
+        to={localStorage.getItem("user") ? "/Wishlist" : "/login"}
+        className="btn position-relative ms-3"
+      >
+        <i className="far fa-heart fs-5 text-secondary"></i>
+        <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-brown">
+          {wishlistCount}
+        </span>
+      </Link>
+
             
             {/* Cart */}
-            <Link to="/Cart" className="btn position-relative ms-2">
+            <Link to={localStorage.getItem("user") ? "/Cart" : "/login"}
+             className="btn position-relative ms-2">
               <i className="fas fa-shopping-cart fs-5 text-secondary"></i>
               <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-brown">
                 3

@@ -30,7 +30,7 @@ router.post("/add-review", async (req, res) => {
 router.get("/view-reviews", async (req, res) => {
   try {
     const reviews = await Review.find()
-      .populate("user", "firstName lastName email") // Adjust fields as needed
+      .populate("user", "fullname lastName email") // Adjust fields as needed
       .populate("product", "name");
 
     res.status(200).json(reviews);
@@ -43,7 +43,7 @@ router.get("/view-reviews", async (req, res) => {
 router.get("/view-review/:id", async (req, res) => {
   try {
     const review = await Review.findById(req.params.id)
-      .populate("user", "firstName lastName email")
+      .populate("user", "fullname lastName email")
       .populate("product", "name");
 
     if (!review) return res.status(404).json({ error: "Review not found" });

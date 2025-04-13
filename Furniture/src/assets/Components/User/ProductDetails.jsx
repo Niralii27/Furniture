@@ -4,35 +4,164 @@ import axios from "axios";
 
 
 
-import img1 from '../../images/cart1.png';
-import product1 from '../../images/cart1.png';
-import product2 from '../../images/cart2.png';
-import product3 from '../../images/product-6.jpg';
-import product4 from '../../images/img1.jpg';
-import product5 from '../../images/product-2.jpeg';
-import product6 from '../../images/product-8.jpg';
-import product7 from '../../images/product4.png';
-import product8 from '../../images/product-5.jpeg';
+//import img1 from '../../images/cart1.png';
+// import product1 from '../../images/cart1.png';
+//import product2 from '../../images/cart2.png';
+// import product3 from '../../images/product-6.jpg';
+// import product4 from '../../images/img1.jpg';
+// import product5 from '../../images/product-2.jpeg';
+// import product6 from '../../images/product-8.jpg';
+// import product7 from '../../images/product4.png';
+// import product8 from '../../images/product-5.jpeg';
 import { Link } from "react-router-dom"
 
 
 function ProductDetails() {
+
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState([]);  // Store reviews
+  const [error, setError] = useState('');  // Error state
+
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  console.log("User from localStorage:", user);
+  const userId = user?.id;
+
   const { id } = useParams();
     const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState(null);
 
   // Fetch product data based on ID
-  useEffect(() => {
-    axios.get(`http://localhost:5000/api/Product/view-product/${id}`)
-    .then((res) => setProduct(res.data))
-      .catch((err) => console.error("Error fetching product:", err));
-  }, [id]);
+        useEffect(() => {
+          axios.get(`http://localhost:5000/api/Product/view-product/${id}`)
+          .then((res) => setProduct(res.data))
+            .catch((err) => console.error("Error fetching product:", err));
+        }, [id]);
 
-  // Quantity functions
-  const increaseQuantity = () => setQuantity(quantity + 1);
-  const decreaseQuantity = () => {
-    if (quantity > 1) setQuantity(quantity - 1);
-  };
+        // Quantity functions
+        const increaseQuantity = () => setQuantity(quantity + 1);
+        const decreaseQuantity = () => {
+          if (quantity > 1) setQuantity(quantity - 1);
+        };
+
+        //Pagination
+
+        //fetch below products
+        const [currentPage] = useState(1);
+        const itemsPerPage = 8;
+
+          // 🟡 Calculate current products to display
+          const indexOfLastItem = currentPage * itemsPerPage;
+          const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+          const currentProducts = products.slice(indexOfFirstItem, indexOfLastItem);
+         // const totalPages = Math.ceil(products.length / itemsPerPage);
+
+        useEffect(() => {
+          fetchProducts();
+        }, []);
+
+        const fetchProducts = () => {
+          axios
+            .get("http://localhost:5000/api/Product/view-product")
+            .then((response) => {
+              setProducts(response.data);
+            })
+            .catch((error) => {
+              console.error("Error fetching products:", error);
+            
+            })
+            .finally(() => {
+              setLoading(false);
+            });
+        };
+
+        useEffect(() => {
+          window.scrollTo(0, 0);
+        }, [currentPage]);
+
+        
+        //Add To Cart
+        const addToCart = async (productId, costPrice, productImage) => {
+          if (!userId) {
+            alert("Please log in to add items to cart.");
+            return;
+          }
+        
+          try {
+            await axios.post("http://localhost:5000/api/Cart/add", {
+              userId,
+              productId,
+              quantity: 1,
+              productImage,
+              costPrice,
+            });
+        
+            alert("Item added to cart!");
+          } catch (error) {
+            console.error("Add to cart error:", error);
+            alert("Failed to add item to cart.");
+          }
+        };
+
+ //WishList 
+        
+        const [wishlist, setWishlist] = useState(() => {
+          const saved = localStorage.getItem(`wishlist_${userId}`) || "[]";
+          return JSON.parse(saved);
+        });
+        
+        const [setWishlistCount] = useState(wishlist.length);
+
+        // Function to check if a product is wishlisted
+        const isProductWishlisted = (productId) => {
+          return wishlist.includes(productId);
+        };
+        
+        // Toggle wishlist for a specific product
+        const handleWishlistToggle = (productId) => {
+          let updatedWishlist;
+          if (wishlist.includes(productId)) {
+            // Remove from wishlist
+            updatedWishlist = wishlist.filter(id => id !== productId);
+          } else {
+            // Add to wishlist
+            updatedWishlist = [...wishlist, productId];
+          }
+        
+          // Update localStorage & state
+          localStorage.setItem(`wishlist_${userId}`, JSON.stringify(updatedWishlist));
+          setWishlist(updatedWishlist);
+          setWishlistCount(updatedWishlist.length); // Update wishlist count after change
+
+        };
+  
+        useEffect(() => {
+          const fetchReviews = async () => {
+            try {
+              console.log("Fetching reviews for product ID:", id);  // 👈 Check in console
+              const response = await axios.get(`http://localhost:5000/api/Review/view-reviews`);
+              
+              // 🔍 Frontend filtering by product ID
+              const filtered = response.data.filter((review) => review.product._id === id);
+        
+              console.log("Filtered reviews:", filtered);  // ✅ Confirm what's showing
+              setReviews(filtered);
+              setLoading(false);
+            } catch (err) {
+              console.error("Error fetching reviews:", err.response?.data || err.message);
+              setError('Error fetching reviews');
+              setLoading(false);
+            }
+          };
+        
+          if (id) {
+            fetchReviews();
+          }
+        }, [id]);
+        
+        
+        
 
   if (!product) return <div className="container pt-5">Loading...</div>;
 
@@ -70,7 +199,7 @@ function ProductDetails() {
           </div>
 
           {/* Price */}
-          <h4>₹{product.salePrice}</h4>
+          <h4>₹{product.costPrice}</h4>
 
           {/* Quantity */}
           <p className="mb-1">Quantity</p>
@@ -78,7 +207,8 @@ function ProductDetails() {
             <button className="btn btn-outline-dark" onClick={decreaseQuantity}>-</button>
             <button className="btn btn-outline-dark">{quantity}</button>
             <button className="btn btn-outline-dark" onClick={increaseQuantity}>+</button>
-            <button className="btn custom-btn ms-3">Add to cart</button>
+            <button className="btn custom-btn ms-3" onClick={() => addToCart(product._id, product.costPrice, product.productImage)} 
+            >Add to cart</button>
           </div>
         </div>
       </div>
@@ -88,36 +218,48 @@ function ProductDetails() {
       <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center">
         <h4 className="mt-5">Customer Reviews</h4>
-        <Link to="/Review" style={{ textDecoration: "none", color: "inherit" }}>
+        <Link to={`/Review/${id}`} style={{ textDecoration: "none", color: "inherit" }}>
         <button className="btn light-brown-btn">Add Review</button>
-        </Link>
+      </Link>
       </div>
 
       <p className="text-muted">You need to order first to give a review on this product!</p>
 
-      <div className="row">
-        <div className="col-md-4">
-          <div className="card p-3 mb-3">
-            <h6>Nirali Akbari ⭐⭐⭐⭐⭐</h6>
-            <p>Fantastic! Exceeded my expectations.</p>
-            <small className="text-muted">Published on January 12, 2025</small>
+              <div className="container pt-3">
+          {loading ? (
+            <div>Loading reviews...</div>
+          ) : error ? (
+            <div className="alert alert-danger">{error}</div>
+          ) : reviews.length === 0 ? (
+            <div>No reviews for this product yet.</div>
+          ) : (
+            <div className="row">
+              {reviews.map((review) => (
+                <div key={review._id} className="col-md-4">
+                  <div className="card p-3 mb-3">
+                  <h6>
+                    {review.user?.fullname} {review.user?.lastName}{" "}
+                    {"⭐".repeat(parseInt(review.rating))}
+                  </h6>
+
+
+            <p>{review.review}</p>
+            <small className="text-muted">
+              Published on{" "}
+              {new Date(review.createdAt).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </small>
           </div>
         </div>
-        <div className="col-md-4">
-          <div className="card p-3 mb-3">
-            <h6>Bhakti Bhut ⭐⭐⭐</h6>
-            <p>Not bad, not great.</p>
-            <small className="text-muted">Published on February 12, 2025</small>
-          </div>
-        </div>
-        <div className="col-md-4">
-          <div className="card p-3 mb-3">
-            <h6>Geeta Divraniya ⭐⭐⭐⭐⭐</h6>
-            <p>Very Good Products</p>
-            <small className="text-muted">Published on march 27, 2025</small>
-          </div>
-        </div>
-      </div>
+      ))}
+    </div>
+  )}
+</div>
+
+
     </div>
 
 
@@ -125,543 +267,86 @@ function ProductDetails() {
       <h4 className="mt-5">More from UrbanWood</h4>
       <div className="container my-5">
                
-               <div className="row row-cols-1 row-cols-sm-2 mt-5 row-cols-md-4 g-4">
-                 <div className="col">
-                   <div className="card h-100 border-light position-relative product-card">
-                     <div className="position-absolute top-0 start-0 m-2">
-                       <span className="badge bg-warning text-dark py-2 px-3">SAVE 15%</span>
-                     </div>
-                     
-                  <Link to="/Wishlist" style={{ textDecoration: "none", color: "inherit" }}>
-              <button className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn">
-                <i className="bi bi-heart-fill text-danger"></i>
-              </button>
-              </Link>
-                     
-                     <img src={product2} className="card-img-top p-3" alt="Chocolate" style={{height: '240px', objectFit: 'contain'}} />
-                     <Link to="/ProductDetails" style={{ textDecoration: "none", color: "inherit" }}>
-
-                     <div className="card-body pb-0">
-                       <p className="text-muted mb-1">Snacks</p>
-                       
-                       <h5 className="card-title">Chocolate</h5>
-                       
-                       <div className="d-flex align-items-center">
-                         <span className="star-rating">
-                           <i className="bi bi-star-fill"></i>
-                           <i className="bi bi-star-fill"></i>
-                           <i className="bi bi-star-fill"></i>
-                           <i className="bi bi-star-fill"></i>
-                           <i className="bi bi-star-half"></i>
-                         </span>
-                         <span className="ms-1 text-muted">(6)</span>
-                       </div>
-                     </div>
-                     
-                     <div className="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
-                       <div>
-                         <span className="text-success fw-bold">₹42.50</span>
-                         <small className="text-muted ms-2 text-decoration-line-through">₹50.00</small>
-                       </div>
-                       
-                       <Link to="/Cart" style={{ textDecoration: "none", color: "inherit" }}>
-                
-                <button className="mt-5"
-                      style={{
-                        border: "1px solid #d2b48c", // Light brown border
-                        backgroundColor: "white", // Default background
-                        color: "black", // Default text color
-                        padding: "8px 16px",
-                        fontWeight: "bold",
-                        cursor: "pointer",
-                        transition: "background-color 0.3s ease, border-color 0.3s ease"
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = "#d2b48c"; // Light brown on hover
-                        e.target.style.color = "white"; // Text color change on hover
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = "white"; // Default background
-                        e.target.style.color = "black"; // Default text color
-                      }}
-                    >
-                      <span className="me-1">Add</span>
-                      <i className="bi bi-cart-plus"></i>
-                    </button>
-
-                </Link>
-                     </div>
-                     </Link>
-                   </div>
-                 </div>
-                 
-                 <div className="col">
-                            <div className="card h-100 border-light position-relative product-card">
-                              <div className="position-absolute top-0 start-0 m-2">
-                                <span className="badge bg-warning text-dark py-2 px-3">SAVE 48%</span>
-                              </div>
-                              <button className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn">
-                                <i className="bi bi-heart text-danger"></i>
-                              </button>
-                              <img src={product1} className="card-img-top p-3" alt="Ladies Fingers" style={{height: '240px', objectFit: 'contain'}} />
-                              
-                              <div className="card-body pb-0">
-                                <p className="text-muted mb-1">Chair</p>
-                                
-                                <h5 className="card-title">Wingback Chair</h5>
-                                
-                                <div className="d-flex align-items-center">
-                                  <span className="star-rating">
-                                    <i className="bi bi-star-fill"></i>
-                                    <i className="bi bi-star-fill"></i>
-                                    <i className="bi bi-star-fill"></i>
-                                    <i className="bi bi-star-fill"></i>
-                                    <i className="bi bi-star"></i>
-                                  </span>
-                                  <span className="ms-1 text-muted">(1)</span>
-                                </div>
-                              </div>
-                              
-                              <div className="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
-                                <div>
-                                  <span className="text fw-bold">₹1900.40</span>
-                                  <small className="text-muted ms-2 text-decoration-line-through">₹2000.00</small>
-                                </div>
-                                
-                                <Link to="/Cart" style={{ textDecoration: "none", color: "inherit" }}>
-                                
-                                <button
-                                      style={{
-                                        border: "1px solid #d2b48c", // Light brown border
-                                        backgroundColor: "white", // Default background
-                                        color: "black", // Default text color
-                                        padding: "8px 16px",
-                                        fontWeight: "bold",
-                                        cursor: "pointer",
-                                        transition: "background-color 0.3s ease, border-color 0.3s ease"
-                                      }}
-                                      onMouseEnter={(e) => {
-                                        e.target.style.backgroundColor = "#d2b48c"; // Light brown on hover
-                                        e.target.style.color = "white"; // Text color change on hover
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        e.target.style.backgroundColor = "white"; // Default background
-                                        e.target.style.color = "black"; // Default text color
-                                      }}
-                                    >
-                                      <span className="me-1">Add</span>
-                                      <i className="bi bi-cart-plus"></i>
-                                    </button>
-                
-                                </Link>
-                              </div>
-                            </div>
-                          </div>
-                 
-                <div className="col">
-                            <div className="card h-100 border-light position-relative product-card">
-                              <div className="position-absolute top-0 start-0 m-2">
-                                <span className="badge bg-warning text-dark py-2 px-3">SAVE 15%</span>
-                              </div>
-                              <button className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn">
-                                <i className="bi bi-heart text-danger"></i>
-                              </button>
-                              <img src={product3} className="card-img-top p-3" alt="Beans" style={{height: '240px', objectFit: 'contain'}} />
-                              
-                              <div className="card-body pb-0">
-                                <p className="text-muted mb-1">Cupboard</p>
-                                
-                                <h5 className="card-title">Display Cupboard</h5>
-                                
-                                <div className="d-flex align-items-center">
-                                  <span className="star-rating">
-                                    <i className="bi bi-star"></i>
-                                    <i className="bi bi-star"></i>
-                                    <i className="bi bi-star"></i>
-                                    <i className="bi bi-star"></i>
-                                    <i className="bi bi-star"></i>
-                                  </span>
-                                  <span className="ms-1 text-muted">(0)</span>
-                                </div>
-                              </div>
-                              
-                              <div className="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
-                                <div>
-                                  <span className="text fw-bold">₹1700.00</span>
-                                  <small className="text-muted ms-2 text-decoration-line-through">₹2000.00</small>
-                                </div>
-                                
-                                 
-                                <Link to="/Cart" style={{ textDecoration: "none", color: "inherit" }}>
-                                
-                                <button
-                                      style={{
-                                        border: "1px solid #d2b48c", // Light brown border
-                                        backgroundColor: "white", // Default background
-                                        color: "black", // Default text color
-                                        padding: "8px 16px",
-                                        fontWeight: "bold",
-                                        cursor: "pointer",
-                                        transition: "background-color 0.3s ease, border-color 0.3s ease"
-                                      }}
-                                      onMouseEnter={(e) => {
-                                        e.target.style.backgroundColor = "#d2b48c"; // Light brown on hover
-                                        e.target.style.color = "white"; // Text color change on hover
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        e.target.style.backgroundColor = "white"; // Default background
-                                        e.target.style.color = "black"; // Default text color
-                                      }}
-                                    >
-                                      <span className="me-1">Add</span>
-                                      <i className="bi bi-cart-plus"></i>
-                                    </button>
-                
-                                </Link>
-                
-                              </div>
-                            </div>
-                          </div>
-                 
-                <div className="col">
-                           <div className="card h-100 border-light position-relative product-card">
-                             <div className="position-absolute top-0 start-0 m-2">
-                               <span className="badge bg-warning text-dark py-2 px-3">SAVE 15%</span>
-                             </div>
-                             <button className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn">
-                               <i className="bi bi-heart-fill text-danger"></i>
-                             </button>
-                             <img src={product8} className="card-img-top p-3" alt="Brinjal" style={{height: '240px', objectFit: 'contain'}} />
-                             
-                             <div className="card-body pb-0">
-                               <p className="text-muted mb-1">Chair</p>
-                               
-                               <h5 className="card-title">Rocking Chair</h5>
-                               
-                               <div className="d-flex align-items-center">
-                                 <span className="star-rating">
-                                   <i className="bi bi-star-fill"></i>
-                                   <i className="bi bi-star-fill"></i>
-                                   <i className="bi bi-star-fill"></i>
-                                   <i className="bi bi-star-fill"></i>
-                                   <i className="bi bi-star"></i>
-                                 </span>
-                                 <span className="ms-1 text-muted">(2)</span>
+                <div className="row row-cols-1 row-cols-sm-2 mt-5 row-cols-md-4 g-4">
+                 {loading ? (
+                             <p>Loading...</p>
+                           ) : (
+                             currentProducts.map((product, index) => (
+                               <div className="col" key={index}>
+                             <div className="card h-100 border-light position-relative product-card">
+                               <div className="position-absolute top-0 start-0 m-2">
+                                 <span className="badge bg-warning text-dark py-2 px-3">SAVE {product.discount || 0}%</span>
                                </div>
-                             </div>
-                             
-                             <div className="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
-                               <div>
-                                 <span className="text fw-bold">₹4250.50</span>
-                                 <small className="text-muted ms-2 text-decoration-line-through">₹5000.00</small>
-                               </div>
-                               
-                               <Link to="/Cart" style={{ textDecoration: "none", color: "inherit" }}>
-                               
+                               <Link to="/Wishlist">
                                <button
-                                     style={{
-                                       border: "1px solid #d2b48c", // Light brown border
-                                       backgroundColor: "white", // Default background
-                                       color: "black", // Default text color
-                                       padding: "8px 16px",
-                                       fontWeight: "bold",
-                                       cursor: "pointer",
-                                       transition: "background-color 0.3s ease, border-color 0.3s ease"
-                                     }}
-                                     onMouseEnter={(e) => {
-                                       e.target.style.backgroundColor = "#d2b48c"; // Light brown on hover
-                                       e.target.style.color = "white"; // Text color change on hover
-                                     }}
-                                     onMouseLeave={(e) => {
-                                       e.target.style.backgroundColor = "white"; // Default background
-                                       e.target.style.color = "black"; // Default text color
-                                     }}
-                                   >
-                                     <span className="me-1">Add</span>
-                                     <i className="bi bi-cart-plus"></i>
-                                   </button>
+                 className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn"
+                 onClick={() => handleWishlistToggle(product._id)}
+               >
+                 <i className={`bi ${isProductWishlisted(product._id) ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
+               </button>
+               
                
                                </Link>
+                               <img
+                                 src={product.productImage ? `http://127.0.0.1:5000/public/uploads/${product.productImage}` : "https://via.placeholder.com/50"} 
+                                 className="card-img-top p-3"
+                                 alt={product.name}
+                                 style={{ height: "240px", objectFit: "contain" }}
+                               />
+                               <Link to={`/ProductDetails/${product._id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                                 <div className="card-body pb-0">
+                                   <p className="text-muted mb-1">{product.category || "Category"}</p>
+                                   <h5 className="card-title">{product.name}</h5>
+                                   <div className="d-flex align-items-center">
+                                     <span className="star-rating">
+                                       <i className="bi bi-star-fill"></i>
+                                       <i className="bi bi-star-fill"></i>
+                                       <i className="bi bi-star-fill"></i>
+                                       <i className="bi bi-star-fill"></i>
+                                       <i className="bi bi-star-half"></i>
+                                     </span>
+                                     <span className="ms-1 text-muted">(6)</span>
+                                   </div>
+                                 </div>
                
-                             </div>
-                           </div>
-                         </div>
-                 <div className="col">
-                            <div className="card h-100 border-light position-relative product-card">
-                              <div className="position-absolute top-0 start-0 m-2">
-                                <span className="badge bg-warning text-dark py-2 px-3">SAVE 15%</span>
-                              </div>
-                              <button className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn">
-                                <i className="bi bi-heart text-danger"></i>
-                              </button>
-                
-                              <img src={product6} className="card-img-top p-3" alt="Brinjal" style={{height: '240px', objectFit: 'contain'}} />
-                              
-                              <div className="card-body pb-0">
-                                <p className="text-muted mb-1">Cupboard</p>
-                                
-                                <h5 className="card-title">Sideboard</h5>
-                                
-                                <div className="d-flex align-items-center">
-                                  <span className="star-rating">
-                                    <i className="bi bi-star-fill"></i>
-                                    <i className="bi bi-star-fill"></i>
-                                    <i className="bi bi-star-fill"></i>
-                                    <i className="bi bi-star-fill"></i>
-                                    <i className="bi bi-star-fill"></i>
-                                  </span>
-                                  <span className="ms-1 text-muted">(7)</span>
-                                </div>
-                              </div>
-                              
-                              <div className="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
-                                <div>
-                                  <span className="text fw-bold">₹2000.50</span>
-                                  <small className="text-muted ms-2 text-decoration-line-through">₹2500.00</small>
-                                </div>
-                                
-                                <Link to="/Cart" style={{ textDecoration: "none", color: "inherit" }}>
-                                
-                                <button
-                                      style={{
-                                        border: "1px solid #d2b48c", // Light brown border
-                                        backgroundColor: "white", // Default background
-                                        color: "black", // Default text color
-                                        padding: "8px 16px",
-                                        fontWeight: "bold",
-                                        cursor: "pointer",
-                                        transition: "background-color 0.3s ease, border-color 0.3s ease"
-                                      }}
-                                      onMouseEnter={(e) => {
-                                        e.target.style.backgroundColor = "#d2b48c"; // Light brown on hover
-                                        e.target.style.color = "white"; // Text color change on hover
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        e.target.style.backgroundColor = "white"; // Default background
-                                        e.target.style.color = "black"; // Default text color
-                                      }}
-                                    >
-                                      <span className="me-1">Add</span>
-                                      <i className="bi bi-cart-plus"></i>
-                                    </button>
-                
-                                </Link>
-                
-                              </div>
-                            </div>
-                          </div>
-                <div className="col">
-                           <div className="card h-100 border-light position-relative product-card">
-                             <div className="position-absolute top-0 start-0 m-2">
-                               <span className="badge bg-warning text-dark py-2 px-3">SAVE 15%</span>
-                             </div>
-                              <button className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn">
-                               <i className="bi bi-heart text-danger"></i>
-                             </button>
-                             <img src={product7} className="card-img-top p-3" alt="Brinjal" style={{height: '240px', objectFit: 'contain'}} />
-                             
-                             <div className="card-body pb-0">
-                               <p className="text-muted mb-1">Chair</p>
-                               
-                               <h5 className="card-title">Windsor Chair</h5>
-                               
-                               <div className="d-flex align-items-center">
-                                 <span className="star-rating">
-                                   <i className="bi bi-star"></i>
-                                   <i className="bi bi-star"></i>
-                                   <i className="bi bi-star"></i>
-                                   <i className="bi bi-star"></i>
-                                   <i className="bi bi-star"></i>
-                                 </span>
-                                 <span className="ms-1 text-muted">(0)</span>
-                               </div>
-                             </div>
-                             
-                             <div className="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
-                               <div>
-                                 <span className="text fw-bold">₹4200.50</span>
-                                 <small className="text-muted ms-2 text-decoration-line-through">₹5000.00</small>
-                               </div>
-                               
-                               <Link to="/Cart" style={{ textDecoration: "none", color: "inherit" }}>
-                               
-                               <button
-                                     style={{
-                                       border: "1px solid #d2b48c", // Light brown border
-                                       backgroundColor: "white", // Default background
-                                       color: "black", // Default text color
-                                       padding: "8px 16px",
-                                       fontWeight: "bold",
-                                       cursor: "pointer",
-                                       transition: "background-color 0.3s ease, border-color 0.3s ease"
-                                     }}
-                                     onMouseEnter={(e) => {
-                                       e.target.style.backgroundColor = "#d2b48c"; // Light brown on hover
-                                       e.target.style.color = "white"; // Text color change on hover
-                                     }}
-                                     onMouseLeave={(e) => {
-                                       e.target.style.backgroundColor = "white"; // Default background
-                                       e.target.style.color = "black"; // Default text color
-                                     }}
-                                   >
-                                     <span className="me-1">Add</span>
-                                     <i className="bi bi-cart-plus"></i>
-                                   </button>
+                                 <div className="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
+                                   <div className="mt-5">
+                                     <span className="text fw-bold">₹{product.costPrice}</span>
+                                     <small className="text-muted ms-2 text-decoration-line-through">
+                                       ₹{product.salePrice}
+                                     </small>
+                                   </div>
+                                   <button
+                                       className="mt-5"
+                                       style={{
+                                         border: "1px solid #d2b48c",
+                                         backgroundColor: "white",
+                                         color: "black",
+                                         padding: "8px 16px",
+                                         fontWeight: "bold",
+                                         cursor: "pointer",
+                                         transition: "background-color 0.3s ease, border-color 0.3s ease",
+                                       }}
+                                       onMouseEnter={(e) => {
+                                         e.target.style.backgroundColor = "#a67c52";
+                                         e.target.style.color = "white";
+                                       }}
+                                       onMouseLeave={(e) => {
+                                         e.target.style.backgroundColor = "white";
+                                         e.target.style.color = "black";
+                                       }}
+                                       onClick={() => addToCart(product._id, product.costPrice, product.productImage)} 
+                                     >
+                                       <span className="me-1">Add</span>
+                                       <i className="bi bi-cart-plus"></i>
+                                     </button>
                
+                                 </div>
                                </Link>
-               
                              </div>
                            </div>
-                         </div>
-                 <div className="col">
-                            <div className="card h-100 border-light position-relative product-card">
-                              <div className="position-absolute top-0 start-0 m-2">
-                                <span className="badge bg-warning text-dark py-2 px-3">SAVE 10%</span>
-                              </div>
-                              <button className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn">
-                                <i className="bi bi-heart text-danger"></i>
-                              </button>
-                
-                              <img src={product4} className="card-img-top p-3" alt="Brinjal" style={{height: '240px', objectFit: 'contain'}} />
-                              
-                              <div className="card-body pb-0">
-                                <p className="text-muted mb-1">Chair</p>
-                                
-                                <h5 className="card-title">Slipper Chair</h5>
-                                
-                                <div className="d-flex align-items-center">
-                                  <span className="star-rating">
-                                    <i className="bi bi-star-fill"></i>
-                                    <i className="bi bi-star-fill"></i>
-                                    <i className="bi bi-star"></i>
-                                    <i className="bi bi-star"></i>
-                                    <i className="bi bi-star"></i>
-                                  </span>
-                                  <span className="ms-1 text-muted">(1)</span>
-                                </div>
-                              </div>
-                              
-                              <div className="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
-                                <div>
-                                  <span className="text fw-bold">₹6200.50</span>
-                                  <small className="text-muted ms-2 text-decoration-line-through">₹6500.00</small>
-                                </div>
-                                
-                                <Link to="/Cart" style={{ textDecoration: "none", color: "inherit" }}>
-                                
-                                <button
-                                      style={{
-                                        border: "1px solid #d2b48c", // Light brown border
-                                        backgroundColor: "white", // Default background
-                                        color: "black", // Default text color
-                                        padding: "8px 16px",
-                                        fontWeight: "bold",
-                                        cursor: "pointer",
-                                        transition: "background-color 0.3s ease, border-color 0.3s ease"
-                                      }}
-                                      onMouseEnter={(e) => {
-                                        e.target.style.backgroundColor = "#d2b48c"; // Light brown on hover
-                                        e.target.style.color = "white"; // Text color change on hover
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        e.target.style.backgroundColor = "white"; // Default background
-                                        e.target.style.color = "black"; // Default text color
-                                      }}
-                                    >
-                                      <span className="me-1">Add</span>
-                                      <i className="bi bi-cart-plus"></i>
-                                    </button>
-                
-                                </Link>
-                
-                              </div>
-                            </div>
-                          </div>
-                <div className="col">
-                           <div className="card h-100 border-light position-relative product-card" style={{
-                                 filter: "blur(1px)", // Blurred effect
-                                 opacity: "0.9", // Reduce visibility
-                                 pointerEvents: "none", // Disable clicks
-                               }}>
-                             <div className="position-absolute top-0 start-0 m-2">
-                               <span className="badge bg-warning text-dark py-2 px-3">OUT OF STOCK</span>
-                             </div>
-                              <button className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn">
-                               <i className="bi bi-heart text-danger"></i>
-                             </button>
-                             <img src={product5} className="card-img-top p-3" alt="Brinjal" style={{height: '240px', objectFit: 'contain'}} />
-                             
-                             <div className="card-body pb-0">
-                               <p className="text-muted mb-1">Chair</p>
-                               
-                               <h5 className="card-title">Accent Chair</h5>
-                               
-                               <div className="d-flex align-items-center">
-                                 <span className="star-rating">
-                                   <i className="bi bi-star-fill"></i>
-                                   <i className="bi bi-star-fill"></i>
-                                   <i className="bi bi-star-fill"></i>
-                                   <i className="bi bi-star-fill"></i>
-                                   <i className="bi bi-star-fill"></i>
-                                 </span>
-                                 <span className="ms-1 text-muted">(10)</span>
-                               </div>
-                             </div>
-                             
-                             <div className="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
-                               <div>
-                                 <span className="text fw-bold">₹7500.00</span>
-                                 <small className="text-muted ms-2 text-decoration-line-through">₹7700.00</small>
-                               </div>
-                               
-                               <Link to="/Cart" style={{ textDecoration: "none", color: "inherit" }}>
-                               
-                               <button
-                                     style={{
-                                       border: "1px solid #d2b48c", // Light brown border
-                                       backgroundColor: "white", // Default background
-                                       color: "black", // Default text color
-                                       padding: "8px 16px",
-                                       fontWeight: "bold",
-                                       cursor: "pointer",
-                                       transition: "background-color 0.3s ease, border-color 0.3s ease"
-                                     }}
-                                     onMouseEnter={(e) => {
-                                       e.target.style.backgroundColor = "#d2b48c"; // Light brown on hover
-                                       e.target.style.color = "white"; // Text color change on hover
-                                     }}
-                                     onMouseLeave={(e) => {
-                                       e.target.style.backgroundColor = "white"; // Default background
-                                       e.target.style.color = "black"; // Default text color
-                                     }}
-                                   >
-                                     <span className="me-1">Add</span>
-                                     <i className="bi bi-cart-plus"></i>
-                                   </button>
-               
-                               </Link>
-               
-                             </div>
-                           </div>
-                           <nav aria-label="Product Pagination">
-                   <ul className="pagination justify-content-end mt-4">
-                     <li className="page-item disabled">
-                       <a className="page-link" href="#" tabIndex="-1" aria-disabled="true">Previous</a>
-                     </li>
-                     <li className="page-item active">
-                       <a className="page-link" href="#">1</a>
-                     </li>
-                     <li className="page-item disabled">
-                       <a className="page-link" href="#">2</a>
-                     </li>
-                     
-                     <li className="page-item disabled">
-                       <a className="page-link" href="#">Next</a>
-                     </li>
-                   </ul>
-                 </nav>
-               
-                         </div>
+                         ))
+                       )}
                  </div>
                  </div>
 
