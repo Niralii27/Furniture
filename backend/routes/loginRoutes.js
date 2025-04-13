@@ -30,7 +30,7 @@ const transporter = nodemailer.createTransport({
   },
 });
   
-  router.post("/add-user", async (req, res) => {
+  router.post("/add-user", upload.single("userImage"), async (req, res) => {
     try { 
             const {
               fullname,
@@ -40,7 +40,7 @@ const transporter = nodemailer.createTransport({
               password,
               role,
               status,
-              userImage,
+             
             } = req.body;
         
             if (!fullname || !email || !password ) {
@@ -48,6 +48,8 @@ const transporter = nodemailer.createTransport({
                 .status(400)
                 .json({ error: "All required fields must be provided." });
             }
+            const userImage = req.file ? req.file.filename : null;
+
         
                 // Check if user exists
    
@@ -60,6 +62,8 @@ const transporter = nodemailer.createTransport({
        const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, {
         expiresIn: "1d",
       });
+
+
             // Create new user
             const newUser = new UserSchema({
               fullname,
@@ -194,6 +198,28 @@ router.put("/update-user/:id", upload.single("userImage"), async (req, res) => {
   }
 });
 
+// Get all users
+router.get("/view-user", async (req, res) => {
+  try {
+    const users = await Login.find();
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+// Get user by ID
+router.get("/view-user/:id", async (req, res) => {
+  try {
+    const user = await Login.findById(req.params.id);
+    
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 // update a Password
 router.put("/change-password/:id", async (req, res) => {
   try {
@@ -217,6 +243,20 @@ router.put("/change-password/:id", async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
+
+
+// Delete user
+router.delete("/delete-user/:id", async (req, res) => {
+  try {
+    const deletedUser = await Login.findByIdAndDelete(req.params.id);
+    if (!deletedUser) return res.status(404).json({ error: "User not found" });
+
+    res.status(200).json({ message: "User deleted successfully", user: deletedUser });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
   // Login Route
 router.post("/login", async (req, res) => {

@@ -16,7 +16,7 @@ const UserList = () => {
     }, []);
 
     const fetchUsers = () => {
-        axios.get("http://localhost:5000/api/User/view-user")
+        axios.get("http://localhost:5000/api/Login/view-user")
             .then((response) => {
                 setUsers(response.data);
             })
@@ -44,7 +44,7 @@ const UserList = () => {
             confirmButtonText: "Yes, delete it!"
         }).then((result) => {
             if (result.isConfirmed) {
-                axios.delete(`http://localhost:5000/api/User/delete-user/${userId}`)
+                axios.delete(`http://localhost:5000/api/Login/delete-user/${userId}`)
                     .then(() => {
                         Swal.fire("Deleted!", "User has been deleted.", "success");
                         fetchUsers();
@@ -63,7 +63,7 @@ const UserList = () => {
 
     // Filtered user list
     const filteredUsers = users.filter((user) =>
-        `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        `${user.fullname} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.phone.toString().includes(searchQuery)
     );
@@ -128,11 +128,11 @@ const UserList = () => {
                                             <td>
                                                 <img
                                                     src={user.userImage ? `http://127.0.0.1:5000/public/uploads/${user.userImage}` : "https://via.placeholder.com/50"}
-                                                    alt={user.firstName}
+                                                    alt={user.fullname}
                                                     style={{ width: 50, height: 50, objectFit: "cover", borderRadius: "50%" }}
                                                 />
                                             </td>
-                                            <td>{user.firstName}</td>
+                                            <td>{user.fullname}</td>
                                             <td>{user.lastName}</td>
                                             <td>{user.email}</td>
                                             <td>{user.phone}</td>

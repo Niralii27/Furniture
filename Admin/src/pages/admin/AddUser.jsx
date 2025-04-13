@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Swal from "sweetalert2";
+import axios from "axios";
+
 
 const AddUser = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    firstName: "",
+    fullname: "",
     lastName: "",
     email: "",
     phone: "",
@@ -54,40 +56,48 @@ const AddUser = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     const newErrors = {};
+    // Validate each field and add errors to newErrors object
     Object.keys(formData).forEach((field) => {
       const err = validateField(field, formData[field]);
       if (err) newErrors[field] = err;
     });
-
+  
+    // If there are validation errors, stop and show them
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-
+  
+    // Clear any previous errors
     setErrors({});
-
+  
+    // Create FormData to send in the request
     const userForm = new FormData();
     Object.keys(formData).forEach((key) => {
       userForm.append(key, formData[key]);
     });
-
+  
     try {
-      const res = await fetch("http://localhost:5000/api/User/add-user", {
-        method: "POST",
-        body: userForm,
+      // Send FormData with axios - do not wrap it in an object
+      const res = await axios.post("http://localhost:5000/api/Login/add-user", userForm, {
+        headers: {
+          "Content-Type": "multipart/form-data", // Necessary for file uploads
+        },
       });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        Swal.fire("Success", data.message || "User added successfully", "success").then(() => {
-          navigate("/admin/users");
+  
+      console.log("Response from backend:", res);
+  
+      // Check the response
+      if (res.status === 201) {
+        Swal.fire("Success", res.data.message || "User added successfully", "success").then(() => {
+          navigate("/admin/users"); // Redirect to users page
         });
-
+  
+        // Reset form after success
         setFormData({
-          firstName: "",
+          fullname: "",
           lastName: "",
           email: "",
           phone: "",
@@ -95,12 +105,14 @@ const AddUser = () => {
           userImage: null,
         });
       } else {
-        Swal.fire("Error", data.error || "Something went wrong", "error");
+        Swal.fire("Error", res.data.error || "Something went wrong", "error");
       }
     } catch (err) {
+      console.error("Error:", err.response?.data || err.message);
       Swal.fire("Error", "Something went wrong. Please try again.", "error");
     }
   };
+  
 
   return (
     <div>
@@ -118,8 +130,8 @@ const AddUser = () => {
             <div className="row mb-3">
               <div className="col-md-6">
                 <label className="form-label">First Name</label>
-                <input type="text" className="form-control" name="firstName" value={formData.firstName} onChange={handleChange} />
-                {errors.firstName && <p className="text-danger">{errors.firstName}</p>}
+                <input type="text" className="form-control" name="fullname" value={formData.fullname} onChange={handleChange} />
+                {errors.fullname && <p className="text-danger">{errors.fullname}</p>}
               </div>
               <div className="col-md-6">
                 <label className="form-label">Last Name</label>

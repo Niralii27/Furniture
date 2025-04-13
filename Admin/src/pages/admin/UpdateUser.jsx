@@ -11,7 +11,7 @@ const UpdateUser = () => {
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-        firstName: "",
+        fullname: "",
         lastName: "",
         email: "",
         phone: "",
@@ -28,11 +28,11 @@ const UpdateUser = () => {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const response = await axios.get(`http://localhost:5000/api/User/view-user/${userId}`);
+                const response = await axios.get(`http://localhost:5000/api/Login/view-user/${userId}`);
                 const user = response.data;
                 
                 setFormData({
-                    firstName: user.firstName || "",
+                    fullname: user.fullname || "",
                     lastName: user.lastName || "",
                     email: user.email || "",
                     phone: user.phone || "",
@@ -93,7 +93,7 @@ const UpdateUser = () => {
     const validateForm = () => {
         const newErrors = {};
         
-        if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
+        if (!formData.fullname.trim()) newErrors.fullname = "First name is required";
         if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
         
         if (!formData.email.trim()) {
@@ -128,7 +128,7 @@ const UpdateUser = () => {
 
         // Prepare FormData for submission (including file upload)
         const formDataToSend = new FormData();
-        formDataToSend.append("firstName", formData.firstName);
+        formDataToSend.append("fullname", formData.fullname);
         formDataToSend.append("lastName", formData.lastName);
         formDataToSend.append("email", formData.email);
         formDataToSend.append("phone", formData.phone);
@@ -144,7 +144,8 @@ const UpdateUser = () => {
             
             // Send PUT request to update user
             const response = await axios.put(
-                `http://localhost:5000/api/User/update-user/${userId}`,
+
+                `http://localhost:5000/api/Login/update-user/${userId}`,
                 formDataToSend,
                 {
                     headers: { 
@@ -223,13 +224,13 @@ const UpdateUser = () => {
                                 </label>
                                 <input
                                     type="text"
-                                    className={`form-control ${errors.firstName ? "is-invalid" : ""}`}
-                                    name="firstName"
-                                    value={formData.firstName}
+                                    className={`form-control ${errors.fullname ? "is-invalid" : ""}`}
+                                    name="fullname"
+                                    value={formData.fullname}
                                     onChange={handleChange}
                                 />
-                                {errors.firstName && (
-                                    <div className="invalid-feedback">{errors.firstName}</div>
+                                {errors.fullname && (
+                                    <div className="invalid-feedback">{errors.fullname}</div>
                                 )}
                             </div>
                             <div className="col-md-6">
