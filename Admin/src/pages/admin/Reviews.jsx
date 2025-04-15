@@ -2,10 +2,14 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
+import { Pagination, Box } from "@mui/material";
 
 const ReviewList = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage] = useState(5);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchReviews();
@@ -47,6 +51,21 @@ const ReviewList = () => {
     });
   };
 
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+  };
+
+  const filteredReviews = reviews.filter((review) =>
+    review.user?.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    review.user?.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    review.product?.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredReviews.length / rowsPerPage);
+  const indexOfLast = currentPage * rowsPerPage;
+  const indexOfFirst = indexOfLast - rowsPerPage;
+  const currentReviews = filteredReviews.slice(indexOfFirst, indexOfLast);
+
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mt-5 mb-4">
@@ -57,58 +76,84 @@ const ReviewList = () => {
             <li className="breadcrumb-item active">Reviews</li>
           </ol>
         </div>
-        <Link className="btn btn-primary" to="/admin/add-review">
-          <i className="fas fa-plus-circle me-2"></i>Add Review
-        </Link>
+
+        <div className="d-flex align-items-center gap-2">
+          <input
+            type="text"
+            className="form-control"
+            style={{ maxWidth: "300px" }}
+            placeholder="Search reviews..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1); // reset to page 1 when searching
+            }}
+          />
+          <Link className="btn btn-primary" to="/admin/add-review">
+            <i className="fas fa-plus-circle"></i>
+          </Link>
+        </div>
       </div>
 
       <div className="card-body">
         {loading ? (
           <p>Loading reviews...</p>
         ) : (
-          <table className="table table-bordered">
-            <thead className="table-light">
-              <tr>
-                <th>#</th>
-                <th>User</th>
-                <th>Product</th>
-                <th>Rating</th>
-                <th>Review</th>
-                <th>Created At</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reviews.length > 0 ? (
-                reviews.map((review, index) => (
-                  <tr key={review._id}>
-                    <td>{index + 1}</td>
-                    <td>{review.user?.firstName} {review.user?.lastName}</td>
-                    <td>{review.product?.name}</td>
-                    <td>{review.rating} ★</td>
-                    <td>{review.review}</td>
-                    <td>{new Date(review.createdAt).toLocaleString()}</td>
-                    <td>
-                      <div className="d-flex flex-nowrap">
-                       
-                        <span
-                          className="text-danger"
-                          style={{ cursor: "pointer" }}
-                          onClick={() => handleDelete(review._id)}
-                        >
-                          <i className="fas fa-trash-alt"></i>
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
+          <>
+            <table className="table table-bordered">
+              <thead className="table-light">
                 <tr>
-                  <td colSpan="7">No reviews found.</td>
+                  <th>#</th>
+                  <th>User</th>
+                  <th>Product</th>
+                  <th>Rating</th>
+                  <th>Review</th>
+                  <th>Created At</th>
+                  <th>Actions</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {currentReviews.length > 0 ? (
+                  currentReviews.map((review, index) => (
+                    <tr key={review._id}>
+                      <td>{indexOfFirst + index + 1}</td>
+                      <td>{review.user?.firstName} {review.user?.lastName}</td>
+                      <td>{review.product?.name}</td>
+                      <td>{review.rating} ★</td>
+                      <td>{review.review}</td>
+                      <td>{new Date(review.createdAt).toLocaleString()}</td>
+                      <td>
+                        <div className="d-flex flex-nowrap">
+                          <span
+                            className="text-danger"
+                            style={{ cursor: "pointer" }}
+                            onClick={() => handleDelete(review._id)}
+                          >
+                            <i className="fas fa-trash-alt"></i>
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7">No reviews found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {filteredReviews.length > rowsPerPage && (
+              <Box mt={3} display="flex" justifyContent="center">
+                <Pagination
+                  count={totalPages}
+                  page={currentPage}
+                  onChange={handlePageChange}
+                  color="primary"
+                />
+              </Box>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -9,6 +9,7 @@ const Orders = () => {
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage] = useState(5);
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
         fetchOrders();
@@ -56,10 +57,16 @@ const Orders = () => {
         setCurrentPage(value);
     };
 
+    const filteredOrders = orders.filter((order) =>
+        order.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        order.phone.includes(searchQuery)
+    );
+
+    const totalPages = Math.ceil(filteredOrders.length / rowsPerPage);
     const indexOfLast = currentPage * rowsPerPage;
     const indexOfFirst = indexOfLast - rowsPerPage;
-    const currentOrders = orders.slice(indexOfFirst, indexOfLast);
-    const totalPages = Math.ceil(orders.length / rowsPerPage);
+    const currentOrders = filteredOrders.slice(indexOfFirst, indexOfLast);
 
     return (
         <div>
@@ -71,7 +78,21 @@ const Orders = () => {
                         <li className="breadcrumb-item active">Orders</li>
                     </ol>
                 </div>
-                <div className="d-flex gap-2">
+                  {/* for search */}
+                <div className="d-flex align-items-center gap-2 mt-3 mt-md-0">
+                    <input
+                        type="text"
+                        className="form-control"
+                        style={{ maxWidth: "300px" }}
+                        placeholder="Search by name, email or phone..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1); // reset to first page on new search
+                        }}
+                    />
+
+
                     <Link className="btn btn-outline-secondary" to="/admin">
                         <i className="fas fa-arrow-left"></i>
                     </Link>
@@ -79,6 +100,20 @@ const Orders = () => {
                         <i className="fas fa-user-plus fa-lg"></i>
                     </Link>
                 </div>
+            </div>
+
+            <div className="d-flex justify-content-between mb-3">
+                <input
+                    type="text"
+                    className="form-control"
+                    style={{ maxWidth: "300px" }}
+                    placeholder="Search orders..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setCurrentPage(1); // reset to page 1 when searching
+                    }}
+                />
             </div>
 
             <div className="card-body">
@@ -148,7 +183,7 @@ const Orders = () => {
                             </tbody>
                         </table>
 
-                        {orders.length > rowsPerPage && (
+                        {filteredOrders.length > rowsPerPage && (
                             <Box mt={3} display="flex" justifyContent="center">
                                 <Pagination
                                     count={totalPages}

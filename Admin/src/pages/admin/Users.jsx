@@ -84,11 +84,13 @@ const UserList = () => {
                     </ol>
                 </div>
 
+
+                {/* for search */}
                 <div className="d-flex align-items-center gap-2 mt-3 mt-md-0">
                     <input
                         type="text"
                         className="form-control"
-                        style={{ maxWidth: "250px" }}
+                        style={{ maxWidth: "300px" }}
                         placeholder="Search by name, email or phone..."
                         value={searchQuery}
                         onChange={(e) => {
@@ -96,6 +98,7 @@ const UserList = () => {
                             setCurrentPage(1); // reset to first page on new search
                         }}
                     />
+
                     <Link className="btn btn-outline-secondary" to="/admin">
                         <i className="fas fa-arrow-left"></i>
                     </Link>
