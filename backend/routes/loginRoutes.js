@@ -220,6 +220,7 @@ router.get("/view-user/:id", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 // update a Password
 router.put("/change-password/:id", async (req, res) => {
   try {

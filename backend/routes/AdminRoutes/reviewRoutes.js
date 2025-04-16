@@ -39,6 +39,22 @@ router.get("/view-reviews", async (req, res) => {
   }
 });
 
+//Admin review fetch
+// View all reviews for admin with necessary fields
+router.get("/view-reviews-admin", async (req, res) => {
+  try {
+    const reviews = await Review.find()
+      .populate("user", "fullname lastName email")  // Adjust the fields you need
+      .populate("product", "name")
+      .select("user product rating review createdAt"); // You can customize the fields you want
+
+    // Send the reviews data in the response
+    res.status(200).json(reviews); 
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // View single review by ID
 router.get("/view-review/:id", async (req, res) => {
   try {

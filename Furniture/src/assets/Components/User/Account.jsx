@@ -1,19 +1,21 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+//import axios from "axios";
 
 function Account() {
 
   const user = JSON.parse(localStorage.getItem("user"));
   console.log("Logged-in user:", user);
+  const userId = user?.id;
 
 
   // Form state
   const [formData, setFormData] = useState({
-    firstName: user.fullname || "",
-    lastName: user.lastName || "",
-    email: user.email || "",
-    phone: user.phone || "",
-    userImage: user.userImage || "",    
+    firstName: "",
+    lastName:  "",
+    email: "",
+    phone:  "",
+    userImage:  "",    
     currentPassword: user.password || "",
     newPassword: "",
     confirmPassword: ""
@@ -119,69 +121,87 @@ function Account() {
   };
 
   // Handle profile update
-  const handleProfileUpdate = async (e) => {
-    e.preventDefault();
-  
-    if (!validateProfileForm()) return;
-  
-    try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("fullname", formData.firstName);
-      formDataToSend.append("lastName", formData.lastName);
-      formDataToSend.append("email", formData.email);
-      formDataToSend.append("phone", formData.phone);
-      formDataToSend.append("password", formData.newPassword || formData.currentPassword);
-  
-      let isImageUpdated = false;
-  
-      if (formData.userImage instanceof File) {
-        formDataToSend.append("userImage", formData.userImage);
-        isImageUpdated = true;
-      }
-  
-      const response = await fetch(`http://localhost:5000/api/Login/update-user/${user._id}`, {
-        method: "PUT",
-        body: formDataToSend,
-      });
-  
-      const result = await response.json();
-  
-      console.log("Response from backend:", result); // helpful for debugging
-  
-      if (response.ok) {
-        alert("Profile updated successfully!");
-  
-        // Save updated user to localStorage
-        localStorage.setItem("user", JSON.stringify(result.user));
-  
-        // Update React state to reflect new data immediately
-        setFormData({
-          ...formData,
-          firstName: result.user.fullname || "",
-          lastName: result.user.lastName || "",
-          email: result.user.email || "",
-          phone: result.user.phone || "",
-          userImage: result.user.userImage || "",
-          currentPassword: result.user.password || "",
-          newPassword: "",
-          confirmPassword: ""
-        });
-  
-        // If a new image was uploaded, update the preview too
-        if (isImageUpdated && result.user.userImage) {
-          setImagePreview(`http://127.0.0.1:5000/public/uploads/${result.user.userImage}`);
-        }
-  
-      } else {
-        alert("Update failed: " + result.message);
-      }
-    } catch (error) {
-      console.error("Update error:", error);
-      alert("Something went wrong!");
+ const handleProfileUpdate = async (e) => {
+  e.preventDefault();
+
+  if (!validateProfileForm()) return;
+
+  try {
+    const formDataToSend = new FormData();
+    formDataToSend.append("fullname", formData.firstName);
+    formDataToSend.append("lastName", formData.lastName);
+    formDataToSend.append("email", formData.email);
+    formDataToSend.append("phone", formData.phone);
+    formDataToSend.append("password", formData.newPassword || formData.currentPassword);
+
+    let isImageUpdated = false;
+
+    if (formData.userImage instanceof File) {
+      formDataToSend.append("userImage", formData.userImage);
+      isImageUpdated = true;
     }
-  };
+
+    // Make API request to update user profile
+    const response = await fetch(`http://localhost:5000/api/Login/update-user/${user.id}`, {
+      method: "PUT",
+      body: formDataToSend,
+    });
+
+    const result = await response.json();
+
+    console.log("Response from backend:", result); // helpful for debugging
+
+    if (response.ok) {
+      alert("Profile updated successfully!");
+
+      // Directly update the formData without localStorage changes
+      setFormData({
+        ...formData,
+        firstName: result.user.fullname || "",
+        lastName: result.user.lastName || "",
+        email: result.user.email || "",
+        phone: result.user.phone || "",
+        userImage: result.user.userImage || "",
+      });
+
+      // If a new image was uploaded, update the preview too
+      if (isImageUpdated && result.user.userImage) {
+        setImagePreview(`http://127.0.0.1:5000/public/uploads/${result.user.userImage}`);
+      }
+    } else {
+      alert("Update failed: " + result.message);
+    }
+  } catch (error) {
+    console.error("Update error:", error);
+    alert("Something went wrong!");
+  }
+};
+
   
-  
+  //fetch data in profile
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`http://localhost:5000/api/Login/view-user/${userId}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch user");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setFormData({
+          firstName: data.fullname || "",
+          lastName: data.lastName || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          userImage: data.userImage || "",
+          currentPassword: data.password || "",
+        });
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }, [userId]);
   
 
   // Handle password change
@@ -191,7 +211,7 @@ function Account() {
   if (!validatePasswordForm()) return;
 
   try {
-    const response = await fetch(`http://localhost:5000/api/Login/change-password/${user._id}`, {
+    const response = await fetch(`http://localhost:5000/api/Login/change-password/${user.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -208,7 +228,7 @@ function Account() {
       alert("Password changed successfully!");
       setFormData({
         ...formData,
-        currentPassword: "",
+        currentPassword: formData.newPassword, // Set the new password as the current password
         newPassword: "",
         confirmPassword: "",
       });

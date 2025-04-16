@@ -19,6 +19,8 @@ const UpdateOrder = () => {
         state: "",
         pinCode: "",
         phone: "",
+        total: "",
+        payment_mode: "",
         shippingCharge: "",
         status: "Pending"
     });
@@ -35,7 +37,7 @@ const UpdateOrder = () => {
         const fetchUserAndProductData = async () => {
             try {
                 const [usersResponse, productsResponse] = await Promise.all([
-                    axios.get("http://localhost:5000/api/user/view-user"),
+                    axios.get("http://localhost:5000/api/Login/view-user"),
                     axios.get("http://localhost:5000/api/product/view-product")
                 ]);
                 
@@ -75,6 +77,8 @@ const UpdateOrder = () => {
                         state: order.state || "",
                         pinCode: order.pinCode || "",
                         phone: order.phone || "",
+                        total: order.total || "",
+                        payment_mode: order.payment_mode || "Cash On Delivery",
                         shippingCharge: order.shippingCharge || "",
                         status: order.status || "Pending"
                     });
@@ -241,7 +245,7 @@ const UpdateOrder = () => {
     // Find user name by ID for display purposes
     const getUserNameById = (userId) => {
         const user = users.find(u => u._id === userId);
-        return user ? `${user.firstName} ${user.lastName}` : "Unknown User";
+        return user ? `${user.fullname} ${user.lastName}` : "Unknown User";
     };
 
     return (
@@ -281,7 +285,7 @@ const UpdateOrder = () => {
                                     <option value="">Select User</option>
                                     {users.map(user => (
                                         <option key={user._id} value={user._id}>
-                                            {user.firstName} {user.lastName}
+                                            {user.fullname} {user.lastName}
                                         </option>
                                     ))}
                                 </select>
@@ -486,6 +490,19 @@ const UpdateOrder = () => {
                                 {errors.shippingCharge && (
                                     <div className="invalid-feedback">{errors.shippingCharge}</div>
                                 )}
+                            </div>
+                            <div className="col-md-6">
+                                <label className="form-label">Payment Mode</label>
+                                <select 
+                                    className="form-select" 
+                                    name="payment_mode" 
+                                    value={formData.payment_mode} 
+                                    onChange={handleChange}
+                                >
+                                    <option value="Pending">Cash On Delivery</option>
+                                    <option value="Processing">Online</option>
+                                    
+                                </select>
                             </div>
                             <div className="col-md-6">
                                 <label className="form-label">Order Status</label>

@@ -19,9 +19,12 @@ const AddOrder = () => {
         pinCode: "",
         phone: "",
         shippingCharge: "",
+        total: "27000",
+        payment_mode: "",
         status: "Pending"
     });
 
+    console.log("form data:", formData);
     const [errors, setErrors] = useState({});
 
     const [users, setUsers] = useState([]);
@@ -85,7 +88,7 @@ const AddOrder = () => {
               }
         
               // Fetch users
-              const userRes = await fetch("http://localhost:5000/api/user/get-all");
+              const userRes = await fetch("http://localhost:5000/api/Login/view-user");
               const userData = await userRes.json();
               if (userRes.ok) {
                 setUsers(userData);
@@ -129,7 +132,10 @@ const AddOrder = () => {
                     pinCode: "",
                     phone: "",
                     shippingCharge: "",
-                    status: "Pending"
+                    total: "2700",
+                    payment_mode: "Cash On Delivery",
+                    status: "Pending",
+
                 });
             } else {
                 Swal.fire({
@@ -175,7 +181,7 @@ const AddOrder = () => {
                                 <option value="" disabled>Select a user</option>
                                 {users.map((user) => (
                                     <option key={user._id} value={user._id}>
-                                    {user.firstName} {user.lastName}
+                                    {user.fullname} {user.lastName}
                                     </option>
                                 ))}
                             </select>
@@ -259,6 +265,15 @@ const AddOrder = () => {
                                 <option>Delivered</option>
                                 <option>Cancelled</option>
                             </select>
+                        </div>
+                        <div className="col-md-6 mb-3">
+                            <label className="form-label">Payment Mode</label>
+                            <select className="form-select" name="payment_mode" value={formData.payment_mode} onChange={handleChange}>
+                                <option>Cash On Delivery</option>
+                                <option>Online</option>
+                                
+                            </select>                          
+                              {errors.payment_mode && <small className="text-danger">{errors.payment_mode}</small>}
                         </div>
                     </div>
                 </div>

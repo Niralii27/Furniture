@@ -14,8 +14,11 @@ const Sidebar = ({ isSidebarToggled }) => {
     { to: "/admin/offers", label: "Offers", icon: "fas fa-gift" },
     { to: "/admin/contacts", label: "Contact", icon: "fas fa-phone" },
     { to: "/admin/responses", label: "Response", icon: "fas fa-envelope" },
-    // { to: "/admin/site-settings", label: "Site Settings", icon: "fas fa-gear" },
   ];
+
+  const isActive = (path) => {
+    return location.pathname === path || location.pathname === path + "/";
+  };
 
   return (
     <div
@@ -29,7 +32,7 @@ const Sidebar = ({ isSidebarToggled }) => {
           backgroundColor: "#001F3F",
           minHeight: "100vh",
           overflowY: "auto",
-          paddingTop: "20px",
+          paddingTop: "70px",
         }}
       >
         <div className="sb-sidenav-menu px-3">
@@ -37,14 +40,13 @@ const Sidebar = ({ isSidebarToggled }) => {
             {navItems.map((item, index) => (
               <Link
                 key={index}
-                className={`nav-link d-flex align-items-center rounded ${
-                  location.pathname === item.to ? "active" : ""
-                }`}
                 to={item.to}
+                className={`nav-link d-flex align-items-center rounded ${
+                  isActive(item.to) ? "active" : ""
+                }`}
                 style={{
-                  color: location.pathname === item.to ? "#fff" : "#ccc",
-                  backgroundColor:
-                    location.pathname === item.to ? "#0d6efd" : "transparent",
+                  color: isActive(item.to) ? "#fff" : "#ccc",
+                  backgroundColor: isActive(item.to) ? "#0d6efd" : "transparent",
                   marginBottom: "10px",
                   transition: "0.2s",
                   fontSize: "15px",

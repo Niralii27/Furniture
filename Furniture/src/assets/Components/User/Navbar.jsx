@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import '../../css/header.css'; 
 import { Link } from "react-router-dom"
 import { NavLink } from "react-router-dom";
+import axios from "axios";
+
 // logo from '../../images/logo.jpeg';
 
 <ul className="navbar-nav mx-auto mb-2 mb-lg-0">
@@ -33,6 +35,8 @@ import { NavLink } from "react-router-dom";
 function Navbar() {
 
   const user = JSON.parse(localStorage.getItem("user"));
+  const userId = user?.id;
+  console.log("user:",userId);
 
   const handleLogout = () => {
     localStorage.removeItem("user"); // Remove user data
@@ -45,13 +49,32 @@ function Navbar() {
   useEffect(() => {
     if (user) {
       const userId = user.id;
+      console.log("wishlist:",userId);
       // Fetch the wishlist from localStorage for this user
       const wishlist = JSON.parse(localStorage.getItem(`wishlist_${userId}`)) || [];
       setWishlistCount(wishlist.length); // Set the count of items
     }
   }, []);
 
+  const [cartCount, setCartCount] = useState(0);
 
+  useEffect(() => {
+    const fetchCart = async () => {
+      if (!userId) return;
+      try {
+        const res = await axios.get(`http://localhost:5000/api/cart/user/${userId}`);
+        const cartItems = res.data;
+    
+        const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+        setCartCount(totalItems);
+      } catch (err) {
+        console.error("Failed to fetch cart", err);
+      }
+    };
+    
+
+    fetchCart();
+  }, [userId]);
   
   
   
@@ -171,9 +194,12 @@ function Navbar() {
               <li><Link className="dropdown-item py-2" to="/Login"><i className="fas fa-sign-out-alt me-2 text-brown"></i>Login</Link></li>
 
               <li>
+              {userId && (
                 <button className="dropdown-item py-2" onClick={handleLogout}>
                   <i className="fas fa-sign-out-alt me-2 text-brown"></i>Logout
                 </button>
+              )}
+
               </li>
             </ul>
             </div>
@@ -191,11 +217,10 @@ function Navbar() {
 
             
             {/* Cart */}
-            <Link to={localStorage.getItem("user") ? "/Cart" : "/login"}
-             className="btn position-relative ms-2">
+            <Link to={userId ? "/Cart" : "/login"} className="btn position-relative ms-2">
               <i className="fas fa-shopping-cart fs-5 text-secondary"></i>
               <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-brown">
-                3
+                {cartCount}
               </span>
             </Link>
           </div>

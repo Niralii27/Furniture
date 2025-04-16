@@ -4,6 +4,8 @@ import axios from "axios";
 //import cart2 from '../../images/cart2.png';
 import contactimg from '../../images/contact.jpg';
 import { Link } from "react-router-dom"
+import Swal from "sweetalert2";
+
 
 
 
@@ -84,6 +86,46 @@ function Cart() {
     window.location.href = '/Checkout'; // or use navigate('/Checkout') if using React Router
   };
   
+  //Offer Code
+
+  const [couponCode, setCouponCode] = useState("");
+const [discountAmount, setDiscountAmount] = useState(0);
+const [discountedTotal, setDiscountedTotal] = useState(null);
+const applyCoupon = async () => {
+  try {
+    const { data } = await axios.get("http://localhost:5000/api/Offer/view-offers");
+    const today = new Date();
+
+    // Calculate current cart total
+    const subtotal = cartItems.reduce((acc, item) => {
+      return acc + (item.productId?.costPrice || 0) * item.quantity;
+    }, 0);
+
+    // Find a valid offer
+    const offer = data.find((offer) =>
+      offer.offerCode?.toLowerCase() === couponCode.toLowerCase() &&
+      new Date(offer.startDate) <= today &&
+      today <= new Date(offer.endDate) &&
+      subtotal >= offer.minDiscountAmount &&
+      subtotal <= offer.maxDiscountAmount
+    );
+
+    if (offer) {
+      const discount = (offer.discount / 100) * subtotal;
+      setDiscountAmount(discount);
+      setDiscountedTotal(subtotal - discount);
+      Swal.fire("Success", `Coupon applied! You saved ₹${discount.toFixed(2)}`, "success");
+    } else {
+      setDiscountAmount(0);
+      setDiscountedTotal(null);
+      Swal.fire("Invalid", "Coupon is not valid or conditions not met", "error");
+    }
+  } catch (error) {
+    console.error("Error applying coupon:", error);
+    Swal.fire("Error", "Something went wrong while applying coupon", "error");
+  }
+};
+
 
   return (
     <div style={{ backgroundColor: "#FAFDFF"}}>
@@ -199,20 +241,25 @@ function Cart() {
               <h4>Coupon</h4>
               <p>Enter your coupon code if you have one.</p>
               <div className="input-group mb-3">
-                <input 
+              <input 
                   type="text" 
                   className="form-control" 
                   placeholder="Coupon Code" 
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
                   style={{border: '1px solid #d2b48c'}}
                 />
+
                 <div className="input-group-append">
-                  <button 
-                    className="btn rounded-right px-4 cart-btn" 
-                    type="button"
-                    style={{...buttonStyle, backgroundColor: '#D2B48C', color: 'white'}}
-                  >
-                    Apply Coupon
-                  </button>
+                <button 
+  className="btn rounded-right px-4 cart-btn" 
+  type="button"
+  onClick={applyCoupon}
+  style={{...buttonStyle, backgroundColor: '#D2B48C', color: 'white'}}
+>
+  Apply Coupon
+</button>
+
                 </div>
               </div>
             </div>
@@ -221,43 +268,51 @@ function Cart() {
                 <div className="card-body">
               
                   <h4 className="card-title">CART TOTALS</h4>
-                    <div className="mt-4">
-                          {cartItems.length === 0 ? (
-                            <p>Cart is empty</p>
-                          ) : (
-                            <div className="d-flex justify-content-between mb-2">
-                              <span>Subtotal</span>
-                              <span>
-                                ₹
-                                {cartItems.reduce((acc, item) => {
-                                  return acc + (item.costPrice || 0) * item.quantity;
-                                }, 0).toFixed(2)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-
-                  <hr />
-                  <div className="d-flex justify-content-between">
-  <span>Total</span>
-  <span>
-    ₹
-    {cartItems.reduce((acc, item) => {
-      return acc + (item.costPrice || 0) * item.quantity;
-    }, 0).toFixed(2)}
-  </span>
+                  <div className="mt-4">
+  {cartItems.length === 0 ? (
+    <p>Cart is empty</p>
+  ) : (
+    <>
+      <div className="d-flex justify-content-between mb-2">
+        <span>Subtotal</span>
+        <span>₹
+          {cartItems.reduce((acc, item) => {
+            return acc + (item.productId?.costPrice || 0) * item.quantity;
+          }, 0).toFixed(2)}
+        </span>
+      </div>
+      <div className="d-flex justify-content-between mb-2">
+        <span>Discount</span>
+        <span>- ₹{discountAmount.toFixed(2)}</span>
+      </div>
+    </>
+  )}
 </div>
+
+<hr />
+
+              <div className="d-flex justify-content-between">
+                <span>Total</span>
+                <span>
+                  ₹{discountedTotal !== null
+                    ? discountedTotal.toFixed(2)
+                    : cartItems.reduce((acc, item) => {
+                        return acc + (item.productId?.costPrice || 0) * item.quantity;
+                      }, 0).toFixed(2)
+                  }
+                </span>
+              </div>
+
 
                   <div className="d-grid gap-2 mt-4">
                     <Link to="/Checkout" style={{ textDecoration: "none", color: "inherit" }}>
                     <button 
-  className="btn btn-block rounded-pill py-3 cart-btn"
-  style={{ ...buttonStyle, backgroundColor: '#ffffff', color: '#CD853F' }}
-  onClick={handleCheckout}
->
-  Proceed To Checkout
-</button>
+                              className="btn btn-block rounded-pill py-3 cart-btn"
+                              style={{ ...buttonStyle, backgroundColor: '#ffffff', color: '#CD853F' }}
+                              onClick={handleCheckout}
+                            >
+                              Proceed To Checkout
+                            </button>
 
 
                     </Link>

@@ -45,6 +45,24 @@ router.post("/add-order", async (req, res) => {
   }
 });
 
+//fetch all orders for admin
+const getAllOrders = async () => {
+  try {
+    // Fetch all orders and populate user and product details
+    const orders = await Order.find().populate("userId").populate("products.productId");
+    return orders;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+router.get("/view-orders", async (req, res) => {
+  try {
+    const orders = await getAllOrders();
+    res.status(200).json(orders);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Get all orders
 router.get("/view-order", async (req, res) => {

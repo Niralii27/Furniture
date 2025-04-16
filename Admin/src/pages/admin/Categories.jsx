@@ -2,10 +2,14 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
+import { Pagination, Box } from "@mui/material";
 
 const CategoryList = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage] = useState(5);
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
         fetchCategories();
@@ -53,9 +57,22 @@ const CategoryList = () => {
         });
     };
 
+    const handlePageChange = (event, value) => {
+        setCurrentPage(value);
+    };
+
+    const filteredCategories = categories.filter((category) =>
+        category.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const totalPages = Math.ceil(filteredCategories.length / rowsPerPage);
+    const indexOfLast = currentPage * rowsPerPage;
+    const indexOfFirst = indexOfLast - rowsPerPage;
+    const currentCategories = filteredCategories.slice(indexOfFirst, indexOfLast);
+
     return (
         <div>
-            <div className="d-flex justify-content-between align-items-center mt-5 mb-4">
+            <div className="d-flex justify-content-between align-items-center mt-5 mb-4 flex-wrap">
                 <div>
                     <h2>Category List</h2>
                     <ol className="breadcrumb mb-0">
@@ -63,52 +80,82 @@ const CategoryList = () => {
                         <li className="breadcrumb-item active">Categories</li>
                     </ol>
                 </div>
-                <Link className="btn btn-primary" to="/admin/add-category">
-                    <i className="fas fa-plus-circle me-2"></i>Add Category
-                </Link>
+
+                <div className="d-flex align-items-center gap-2 mt-3 mt-md-0">
+                    <input
+                        type="text"
+                        className="form-control"
+                        style={{ maxWidth: "300px" }}
+                        placeholder="Search category..."
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1); // reset to page 1 when searching
+                        }}
+                    />
+                    <Link className="btn btn-outline-secondary" to="/admin">
+                        <i className="fas fa-arrow-left"></i>
+                    </Link>
+                    <Link className="btn btn-primary" to="/admin/add-category">
+                        <i className="fas fa-plus-circle"></i>
+                    </Link>
+                </div>
             </div>
 
             <div className="card-body">
                 {loading ? (
                     <p>Loading categories...</p>
                 ) : (
-                    <table className="table table-bordered">
-                        <thead className="table-light">
-                            <tr>
-                                <th>#</th>
-                                <th>Category Name</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {categories.length > 0 ? (
-                                categories.map((category, index) => (
-                                    <tr key={category._id}>
-                                        <td>{index + 1}</td>
-                                        <td>{category.name}</td>
-                                        <td>
-                                            <div className="d-flex flex-nowrap">
-                                                <Link className="text-primary me-2" to={`/admin/update-category?category_id=${category._id}`}>
-                                                    <i className="fas fa-edit"></i>
-                                                </Link>
-                                                <span
-                                                    className="text-danger"
-                                                    style={{ cursor: "pointer" }}
-                                                    onClick={() => handleDelete(category._id)}
-                                                >
-                                                    <i className="fas fa-trash-alt"></i>
-                                                </span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
+                    <>
+                        <table className="table table-bordered text-nowrap">
+                            <thead className="table-light">
                                 <tr>
-                                    <td colSpan="3">No categories found.</td>
+                                    <th>#</th>
+                                    <th>Category Name</th>
+                                    <th>Actions</th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {currentCategories.length > 0 ? (
+                                    currentCategories.map((category, index) => (
+                                        <tr key={category._id}>
+                                            <td>{indexOfFirst + index + 1}</td>
+                                            <td>{category.name}</td>
+                                            <td>
+                                                <div className="d-flex flex-nowrap">
+                                                    <Link className="text-primary me-2" to={`/admin/update-category?category_id=${category._id}`}>
+                                                        <i className="fas fa-edit"></i>
+                                                    </Link>
+                                                    <span
+                                                        className="text-danger"
+                                                        style={{ cursor: "pointer" }}
+                                                        onClick={() => handleDelete(category._id)}
+                                                    >
+                                                        <i className="fas fa-trash-alt"></i>
+                                                    </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="3">No categories found.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+
+                        {filteredCategories.length > rowsPerPage && (
+                            <Box mt={3} display="flex" justifyContent="center">
+                                <Pagination
+                                    count={totalPages}
+                                    page={currentPage}
+                                    onChange={handlePageChange}
+                                    color="primary"
+                                />
+                            </Box>
+                        )}
+                    </>
                 )}
             </div>
         </div>

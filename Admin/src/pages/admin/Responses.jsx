@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
+import { Pagination, Box } from "@mui/material";
 
 const Responses = () => {
   const [responses, setResponses] = useState([
@@ -20,11 +21,17 @@ const Responses = () => {
       message: "Great service!",
       reply: "Thank you, Sneha! We're glad you had a great experience. 😊",
     },
+    // You can add more dummy responses here to test pagination
   ]);
 
   const [reply, setReply] = useState("");
   const [selectedResponse, setSelectedResponse] = useState(null);
   const [error, setError] = useState("");
+
+  // 🔍 Pagination and Search states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage] = useState(5);
 
   const handleDelete = (id) => {
     Swal.fire({
@@ -60,15 +67,48 @@ const Responses = () => {
     Swal.fire("Success", "Reply added/updated successfully!", "success");
   };
 
+  // 🔍 Search filtering
+  const filteredResponses = responses.filter((res) =>
+    res.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    res.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    res.message.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // 📄 Pagination logic
+  const totalPages = Math.ceil(filteredResponses.length / rowsPerPage);
+  const indexOfLast = currentPage * rowsPerPage;
+  const indexOfFirst = indexOfLast - rowsPerPage;
+  const currentResponses = filteredResponses.slice(indexOfFirst, indexOfLast);
+
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+  };
+
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mt-4 mb-4">
-        <h1>Responses</h1>
-        <ol className="breadcrumb mb-0">
-          <li className="breadcrumb-item"><Link to="/admin">Dashboard</Link></li>
-          <li className="breadcrumb-item active">Responses</li>
-        </ol>
+        <div>
+          <h1>Responses</h1>
+          <ol className="breadcrumb mb-0">
+            <li className="breadcrumb-item"><Link to="/admin">Dashboard</Link></li>
+            <li className="breadcrumb-item active">Responses</li>
+          </ol>
+        </div>
+        <div>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search responses..."
+            style={{ maxWidth: "300px" }}
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1); // reset to first page on new search
+            }}
+          />
+        </div>
       </div>
+
       <div className="card-body">
         <table className="table border text-nowrap">
           <thead className="table-light">
@@ -82,8 +122,8 @@ const Responses = () => {
             </tr>
           </thead>
           <tbody>
-            {responses.length ? (
-              responses.map((response) => (
+            {currentResponses.length ? (
+              currentResponses.map((response) => (
                 <tr key={response.id}>
                   <td>{response.userName}</td>
                   <td>{response.email}</td>
@@ -91,30 +131,28 @@ const Responses = () => {
                   <td>{response.message}</td>
                   <td>{response.reply || "-"}</td>
                   <td>
-                  <div className="d-flex gap-2">
-  <span
-    className="text-primary"
-    style={{ cursor: "pointer" }}
-    data-bs-toggle="modal"
-    data-bs-target="#replyModal"
-    onClick={() => {
-      setSelectedResponse(response);
-      setReply(response.reply || "");
-      setError("");
-    }}
-  >
-    <i className="fas fa-reply"></i>
-  </span>
-  <span
-    className="text-danger"
-    style={{ cursor: "pointer" }}
-    onClick={() => handleDelete(response.id)}
-    // onClick={() => handleDelete(response)}
-  >
-    <i className="fas fa-trash-alt"></i>
-  </span>
-</div>
-
+                    <div className="d-flex gap-2">
+                      <span
+                        className="text-primary"
+                        style={{ cursor: "pointer" }}
+                        data-bs-toggle="modal"
+                        data-bs-target="#replyModal"
+                        onClick={() => {
+                          setSelectedResponse(response);
+                          setReply(response.reply || "");
+                          setError("");
+                        }}
+                      >
+                        <i className="fas fa-reply"></i>
+                      </span>
+                      <span
+                        className="text-danger"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => handleDelete(response.id)}
+                      >
+                        <i className="fas fa-trash-alt"></i>
+                      </span>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -125,6 +163,18 @@ const Responses = () => {
             )}
           </tbody>
         </table>
+
+        {/* Pagination UI */}
+        {filteredResponses.length > rowsPerPage && (
+          <Box mt={3} display="flex" justifyContent="center">
+            <Pagination
+              count={totalPages}
+              page={currentPage}
+              onChange={handlePageChange}
+              color="primary"
+            />
+          </Box>
+        )}
       </div>
 
       {/* Reply Modal */}
@@ -148,9 +198,7 @@ const Responses = () => {
               {error && <div className="text-danger mt-1">{error}</div>}
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" data-bs-dismiss="modal">
-                Close
-              </button>
+              <button className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
               <button
                 className="btn btn-primary"
                 onClick={() => {
