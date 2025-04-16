@@ -132,4 +132,16 @@ router.get('/get-all', async (req, res) => {
   }
 });
 
+
+//  to fetch the total number of users onm dashboard
+router.get("/total-users-count", async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments(); 
+    res.status(200).json({ totalUsers });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch total customer count" });
+  }
+});
+
+
 module.exports = router;

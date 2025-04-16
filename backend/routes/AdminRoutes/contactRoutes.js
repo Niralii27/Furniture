@@ -74,4 +74,15 @@ router.put("/update-contact/:id", async (req, res) => {
 });
 
 
+// Route to fetch total contacts count on dashboard
+router.get("/total-contacts-count", async (req, res) => {
+  try {
+    const totalContacts = await Contact.countDocuments();  // Counting the contacts in the Contact collection
+    res.status(200).json({ totalContacts });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch total contacts count" });
+  }
+});
+
+
 module.exports = router;

@@ -91,7 +91,7 @@ const UserList = () => {
                         type="text"
                         className="form-control"
                         style={{ maxWidth: "300px" }}
-                        placeholder="Search by name, email or phone..."
+                        placeholder="Search Customer..."
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);

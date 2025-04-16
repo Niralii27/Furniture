@@ -84,7 +84,7 @@ const Orders = () => {
                         type="text"
                         className="form-control"
                         style={{ maxWidth: "300px" }}
-                        placeholder="Search by name, email or phone..."
+                        placeholder="Search Orders..."
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
@@ -102,19 +102,7 @@ const Orders = () => {
                 </div>
             </div>
 
-            <div className="d-flex justify-content-between mb-3">
-                <input
-                    type="text"
-                    className="form-control"
-                    style={{ maxWidth: "300px" }}
-                    placeholder="Search orders..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                        setCurrentPage(1); // reset to page 1 when searching
-                    }}
-                />
-            </div>
+         
 
             <div className="card-body">
                 {loading ? (

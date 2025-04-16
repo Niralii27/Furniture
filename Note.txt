@@ -1,2 +1,3 @@
 -- Fatch response from userside
--- Edit Admin Profile
+-- Edit Admin Profile and login admin
+--in product--->display category name inplace of id 

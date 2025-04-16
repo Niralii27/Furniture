@@ -62,6 +62,7 @@ router.get("/view-product", async (req, res) => {
 router.get("/view-product/:id", async (req, res) => {
   try {
     const products = await Product.findById(req.params.id);
+    
     if (!products) return res.status(404).json({ error: "Product not found" });
     res.status(200).json(products);
   } catch (error) {
@@ -111,5 +112,17 @@ router.get('/get-all', async (req, res) => {
     res.status(500).json({ message: 'Server error while fetching products' });
   }
 });
+
+
+// Route to fetch total products count
+router.get("/total-products-count", async (req, res) => {
+  try {
+    const totalProducts = await Product.countDocuments();  // Counting the products in the Product collection
+    res.status(200).json({ totalProducts });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch total products count" });
+  }
+});
+
 
 module.exports = router;
