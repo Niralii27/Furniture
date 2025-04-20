@@ -5,6 +5,7 @@ import axios from "axios";
 import contactimg from '../../images/contact.jpg';
 import { Link } from "react-router-dom"
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 
 
@@ -16,7 +17,8 @@ function Cart() {
   const user = JSON.parse(localStorage.getItem("user"));
   const userId = user?.id;
 
-          
+  const navigate = useNavigate();
+
 
         // Button styles
         const buttonStyle = {
@@ -227,12 +229,14 @@ const applyCoupon = async () => {
               </button> */}
             </div>
             <div>
-              <button 
-                className="btn rounded-pill px-4 py-2 cart-btn"
-                style={{...buttonStyle, backgroundColor: '#ffffff', color: '#CD853F'}}
-              >
-                Continue Shopping
-              </button>
+            <button 
+  className="btn rounded-pill px-4 py-2 cart-btn"
+  style={{...buttonStyle, backgroundColor: '#ffffff', color: '#CD853F'}}
+  onClick={() => navigate("/Shop")}
+>
+  Continue Shopping
+</button>
+
             </div>
           </div>
   

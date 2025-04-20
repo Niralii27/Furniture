@@ -10,9 +10,13 @@ const ProductList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage] = useState(5);
     const [searchQuery, setSearchQuery] = useState("");
+    const [categories, setCategories] = useState([]); // To store categories
+
 
     useEffect(() => {
         fetchProducts();
+        fetchCategories();
+
     }, []);
 
     const fetchProducts = () => {
@@ -30,6 +34,15 @@ const ProductList = () => {
             })
             .finally(() => {
                 setLoading(false);
+            });
+    };
+    const fetchCategories = () => {
+        axios.get("http://localhost:5000/api/Category/view-category")  // Assuming you have an API to fetch categories
+            .then((response) => {
+                setCategories(response.data);
+            })
+            .catch((error) => {
+                console.error("Error fetching categories:", error);
             });
     };
 
@@ -71,6 +84,12 @@ const ProductList = () => {
     const indexOfFirstProduct = indexOfLastProduct - rowsPerPage;
     const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
 
+ // Get category name by category ID
+ const getCategoryNameById = (categoryId) => {
+    const category = categories.find((cat) => cat._id === categoryId);
+    return category ? category.name : "Unknown";
+};
+    
     return (
         <div>
             <div className="d-flex justify-content-between align-items-center mt-5 mb-5 flex-wrap">
@@ -127,7 +146,7 @@ const ProductList = () => {
                                     currentProducts.map((product) => (
                                         <tr key={product._id}>
                                             <td>{product.name}</td>
-                                            <td>{product.category}</td>
+                                            <td>{getCategoryNameById(product.category)}</td>
                                             <td>₹{product.costPrice}</td>
                                             <td>₹{product.salePrice}</td>
                                             <td>{product.discount || 0}%</td>

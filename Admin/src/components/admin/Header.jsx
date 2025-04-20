@@ -2,8 +2,10 @@ import React, { useState,useEffect  } from 'react'
 import { Link } from 'react-router-dom'
 const Header = ({toggleSidebar}) => {
     
-  const [search, setSearch] = useState("");
+  //const [search, setSearch] = useState("");
 
+  const user = JSON.parse(localStorage.getItem("admin"));
+  console.log("admin1:", user);
   
   return (
     <nav className="sb-topnav navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: "#001F3F" }}>
@@ -50,8 +52,8 @@ const Header = ({toggleSidebar}) => {
             />
 
               {/* <i className="fas fa-user fa-fw"></i> */}
-              Bhakti Bhut
-            </a>
+              {user?.fullname}
+                          </a>
             <ul className="dropdown-menu dropdown-menu-end">
               <li>
                 <Link className="dropdown-item" to="/admin/my-profile">

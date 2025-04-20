@@ -58,10 +58,13 @@ function ProductDetails() {
           const indexOfLastItem = currentPage * itemsPerPage;
           const indexOfFirstItem = indexOfLastItem - itemsPerPage;
           const currentProducts = products.slice(indexOfFirstItem, indexOfLastItem);
+              const [categories, setCategories] = useState([]); // To store categories
+          
          // const totalPages = Math.ceil(products.length / itemsPerPage);
 
         useEffect(() => {
           fetchProducts();
+          fetchCategories();
         }, []);
 
         const fetchProducts = () => {
@@ -82,6 +85,22 @@ function ProductDetails() {
         useEffect(() => {
           window.scrollTo(0, 0);
         }, [currentPage]);
+
+        
+  const fetchCategories = () => {
+    axios.get("http://localhost:5000/api/Category/view-category")  // Assuming you have an API to fetch categories
+        .then((response) => {
+            setCategories(response.data);
+        })
+        .catch((error) => {
+            console.error("Error fetching categories:", error);
+        });
+};
+// Get category name by category ID
+const getCategoryNameById = (categoryId) => {
+  const category = categories.find((cat) => cat._id === categoryId);
+  return category ? category.name : "Unknown";
+};
 
         
         //Add To Cart
@@ -332,7 +351,7 @@ function ProductDetails() {
                                />
                                <Link to={`/ProductDetails/${product._id}`} style={{ textDecoration: "none", color: "inherit" }}>
                                  <div className="card-body pb-0">
-                                   <p className="text-muted mb-1">{product.category || "Category"}</p>
+                                   <p className="text-muted mb-1">{getCategoryNameById(product.category) || "Category"}</p>
                                    <h5 className="card-title">{product.name}</h5>
                                    <div className="d-flex align-items-center">
                                      <span className="star-rating">

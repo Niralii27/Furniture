@@ -201,14 +201,21 @@ function Login() {
        // Store user token and details
        localStorage.setItem(`${data.user.role}token`, data.token);
        localStorage.setItem(data.user.role, JSON.stringify(data.user));
-       
+
+       // If user is admin, store admin info separately
+      //  localStorage.setItem(data.admin.role, JSON.stringify(data.admin));  // Storing admin details if role is "admin"
+   
+      //  console.log("Admin data stored in localStorage:", JSON.parse(localStorage.getItem("admin")));
 
       //  setStatusMessage(data.message);
       //  setStatusType(data.status);
       if (data.user.role === "admin") {
-        window.location.href = "http://localhost:5174/admin";
+       
+       window.location.href = "http://localhost:5174/admin";
+
       } else {
         navigate("/home");
+        window.location.reload();
       }
       
       //  setTimeout(() => {

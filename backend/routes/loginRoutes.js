@@ -295,7 +295,20 @@ router.post("/login", async (req, res) => {
         userImage: user.userImage,  // Include userImage
         password: user.password, 
       },
+      
+      admin: user.role === "admin" ? {
+        id: user._id,
+        fullname: user.fullname,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        lastName: user.lastName,
+        userImage: user.userImage,
+        password: user.password
+      } : null
+      
     });
+    
   } catch (error) {
     console.error("🔥 Backend Error:", error); // Yeh error terminal me show karega
 

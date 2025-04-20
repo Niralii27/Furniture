@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import Swal from 'sweetalert2';
+import { toast } from "react-toastify";
 
 
 const UpdateProduct = () => {
@@ -19,6 +20,27 @@ const UpdateProduct = () => {
         description: "",
         productImage: "",
     });
+
+    const [categories, setCategories] = useState([]);
+    
+    // for fatch category name
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await fetch("http://localhost:5000/api/Category/get-all");
+                const data = await res.json();
+                if (res.ok) {
+                    setCategories(data.categories); // ✅ Check if this key matches your backend response
+                } else {
+                    toast.error(data.message || "Failed to load categories");
+                }
+            } catch (error) {
+                toast.error("Error fetching categories");
+            }
+        };
+    
+        fetchCategories();
+    }, []);
 
     const [preview, setPreview] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -183,12 +205,10 @@ const UpdateProduct = () => {
                                 <div className="col-md-6 mb-3">
                                     <label className="form-label">Category</label>
                                     <select className="form-select" name="category" value={productData.category} onChange={handleChange}>
-                                        <option value="">Select a category</option>
-                                        <option value="Chair">Chair</option>
-                                        <option value="Table">Table</option>
-                                        <option value="Sofa">Sofa</option>
-                                        <option value="Bed">Bed</option>
-                                        <option value="Cabinet">Cabinet</option>
+                                        <option value="" disabled>Select a category</option>
+                                    {categories.map((category) => (
+                                        <option key={category._id} value={category._id}>{category.name}</option>
+                                    ))}
                                     </select>
                                     {errors.category && <small className="text-danger">{errors.category}</small>}
                                 </div>

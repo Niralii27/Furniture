@@ -46,36 +46,79 @@ function Navbar() {
   const [wishlistCount, setWishlistCount] = useState(0);
 
   
-  useEffect(() => {
-    if (user) {
-      const userId = user.id;
-      console.log("wishlist:",userId);
-      // Fetch the wishlist from localStorage for this user
-      const wishlist = JSON.parse(localStorage.getItem(`wishlist_${userId}`)) || [];
-      setWishlistCount(wishlist.length); // Set the count of items
-    }
-  }, []);
+ // Create a function to get wishlist count
+const getWishlistCount = () => {
+  if (user) {
+    const wishlist = JSON.parse(localStorage.getItem(`wishlist_${userId}`)) || [];
+    return wishlist.length;
+  }
+  return 0;
+};
 
+// Add this effect to listen for wishlist changes
+useEffect(() => {
+  // Initial load
+  setWishlistCount(getWishlistCount());
+  
+  // Create a function to handle wishlist updates
+  const handleWishlistUpdate = () => {
+    setWishlistCount(getWishlistCount());
+  };
+  
+  // Set up an interval to check wishlist count periodically
+  const intervalId = setInterval(handleWishlistUpdate, 1000);
+  
+  // Clean up the interval when component unmounts
+  return () => clearInterval(intervalId);
+}, [userId]);
+
+  // const [cartCount, setCartCount] = useState(0);
+
+  //       useEffect(() => {
+  //         const fetchCart = async () => {
+  //           if (!userId) return;
+  //           try {
+  //             const res = await axios.get(`http://localhost:5000/api/cart/user/${userId}`);
+  //             const cartItems = res.data;
+          
+  //             const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  //             setCartCount(totalItems);
+
+  //           } catch (err) {
+  //             console.error("Failed to fetch cart", err);
+  //           }
+  //         };
+          
+
+  //         fetchCart();
+  //       }, [userId]);
+        
   const [cartCount, setCartCount] = useState(0);
 
-  useEffect(() => {
-    const fetchCart = async () => {
-      if (!userId) return;
-      try {
-        const res = await axios.get(`http://localhost:5000/api/cart/user/${userId}`);
-        const cartItems = res.data;
-    
-        const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-        setCartCount(totalItems);
-      } catch (err) {
-        console.error("Failed to fetch cart", err);
-      }
-    };
-    
+// Function to fetch cart data
+const fetchCart = async () => {
+  if (!userId) return;
+  try {
+    const res = await axios.get(`http://localhost:5000/api/cart/user/${userId}`);
+    const cartItems = res.data;
+    const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+    setCartCount(totalItems);
+  } catch (err) {
+    console.error("Failed to fetch cart", err);
+  }
+};
 
-    fetchCart();
-  }, [userId]);
+// Set up polling to check for cart changes
+useEffect(() => {
+  // Initial fetch
+  fetchCart();
   
+  // Check every 2 seconds for changes
+  const intervalId = setInterval(fetchCart, 1000);
+  
+  // Clean up on unmount
+  return () => clearInterval(intervalId);
+}, [userId]);
   
   
   return (
@@ -191,7 +234,13 @@ function Navbar() {
             </li>
 
               <li><hr className="dropdown-divider" /></li>
-              <li><Link className="dropdown-item py-2" to="/Login"><i className="fas fa-sign-out-alt me-2 text-brown"></i>Login</Link></li>
+              {!userId && (
+              <li>
+                <Link className="dropdown-item py-2" to="/Login">
+                  <i className="fas fa-sign-out-alt me-2 text-brown"></i>Login
+                </Link>
+              </li>
+            )}
 
               <li>
               {userId && (

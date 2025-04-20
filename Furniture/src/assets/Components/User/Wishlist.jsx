@@ -12,16 +12,16 @@ function Wishlist() {
     color: 'white'
   };
 
-  const moveAllButtonStyle = {
-    color: '#CD853F',
-    borderColor: '#CD853F',
-    backgroundColor: 'white',
-    padding: '10px 20px',
-    borderRadius: '4px',
-    marginTop: '20px',
-    display: 'inline-block',
-    float: 'right'
-  };
+  // const moveAllButtonStyle = {
+  //   color: '#CD853F',
+  //   borderColor: '#CD853F',
+  //   backgroundColor: 'white',
+  //   padding: '10px 20px',
+  //   borderRadius: '4px',
+  //   marginTop: '20px',
+  //   display: 'inline-block',
+  //   float: 'right'
+  // };
 
  
   
@@ -160,9 +160,9 @@ const handleAddToCart = async (product) => {
       </div>
       
       {/* Move All to Cart Button */}
-      <div className="text-right">
+      {/* <div className="text-right">
         <button className="btn" style={moveAllButtonStyle}>Move all to cart</button>
-      </div>
+      </div> */}
     </div>
     </div>
   );
