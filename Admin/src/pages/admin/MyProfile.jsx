@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { toast } from "react-toastify";
 import axios from "axios";
+import Swal from "sweetalert2"; // Import SweetAlert
 
 const MyProfile = () => {
-    console.log("Admin data stored in localStorage:", JSON.parse(localStorage.getItem("admin")));
-
     const [emailForm, setEmailForm] = useState({
         fullname: "",
         lastName: "",
@@ -15,52 +13,75 @@ const MyProfile = () => {
     });
 
     const [passwordForm, setPasswordForm] = useState({
-        currentPassword: "",
+        currentPassword: "user.password",
         newPassword: "",
         confirmPassword: "",
     });
 
     const [errors, setErrors] = useState({});
     const [userId, setUserId] = useState(null);
+    const [user, setUser] = useState(null);
 
-  // UseEffect with a slight delay or retry mechanism
-useEffect(() => {
-    const timer = setTimeout(() => {
-        const user = JSON.parse(localStorage.getItem("admin"));
-        console.log("admin:", user);
+    // Set user from URL or localStorage
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const userData = urlParams.get('userData');
 
+        if (userData) {
+            const parsedUser = JSON.parse(decodeURIComponent(userData));
+            console.log("Decoded user from URL:", parsedUser);
+            setUser(parsedUser);
+            localStorage.setItem("admin", JSON.stringify(parsedUser));
+        } else {
+            const stored = localStorage.getItem("admin");
+            if (stored) {
+                const parsedStored = JSON.parse(stored);
+                console.log("User from localStorage:", parsedStored);
+                setUser(parsedStored);
+            }
+        }
+    }, []);
+
+    // Fetch user data when user is available
+    useEffect(() => {
         if (user && user.id) {
+            console.log("Calling fetchUserData with ID:", user.id);
             setUserId(user.id);
             fetchUserData(user.id);
-        } else {
-            console.log("No admin data in localStorage");
         }
-    }, 100); // Wait for 100ms before trying to get localStorage
-
-    return () => clearTimeout(timer);
-}, []);
+    }, [user]);
 
     const fetchUserData = async (id) => {
-        if (!id) return; // Prevent API call if no user ID is set
-    
+        if (!id) return;
+
         try {
             console.log("Fetching user data for ID:", id);
-    
-            const res = await axios.get(`/api/view-user/${id}`);
+            const res = await axios.get(`http://localhost:5000/api/Login/view-user/${id}`);
             console.log("User fetched:", res.data);
-    
-            const { fullname, lastName, email, phone } = res.data;
-    
+
+            const { fullname, lastName, email, phone, userImage } = res.data;
+
+            // Generate image URL if userImage exists
+            const imageUrl = userImage
+                ? `http://127.0.0.1:5000/public/uploads/${userImage}`
+                : null;
+
             setEmailForm((prev) => ({
                 ...prev,
                 fullname,
                 lastName,
                 email,
                 phone,
+                userImage: imageUrl, // Set the image URL here
             }));
         } catch (err) {
             console.error("Fetch error:", err.response?.data || err.message);
-            toast.error("Failed to load user profile.");
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to load user profile.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
         }
     };
 
@@ -92,14 +113,6 @@ useEffect(() => {
             error = "Invalid email format";
         }
 
-        if (name === "userImage" && value && !["image/jpeg", "image/png", "image/jpg"].includes(value?.type)) {
-            error = "Only JPG, JPEG, and PNG images are allowed.";
-        }
-
-        if (name === "currentPassword" && value.length < 8) {
-            error = "Current password must be at least 8 characters.";
-        }
-
         if (name === "newPassword" && value.length < 8) {
             error = "New password must be at least 8 characters.";
         }
@@ -113,37 +126,104 @@ useEffect(() => {
 
     const handleEmailSubmit = async (e) => {
         e.preventDefault();
-
+    
         const formErrors = {};
         Object.keys(emailForm).forEach((field) => {
+            // Skip validation for userImage if it's not a File instance or null
+            if (field === "userImage" && !(emailForm[field] instanceof File)) return;
+            
             const error = validateField(field, emailForm[field]);
             if (error) formErrors[field] = error;
         });
-
+    
         if (Object.keys(formErrors).length > 0) {
             setErrors(formErrors);
             return;
         }
-
-        const formData = new FormData();
-        formData.append("fullname", emailForm.fullname);
-        formData.append("lastName", emailForm.lastName);
-        formData.append("email", emailForm.email);
-        formData.append("phone", emailForm.phone);
-        if (emailForm.userImage) {
-            formData.append("userImage", emailForm.userImage);
+    
+        const formDataToSend = new FormData();
+        formDataToSend.append("fullname", emailForm.fullname);
+        formDataToSend.append("lastName", emailForm.lastName);
+        formDataToSend.append("email", emailForm.email);
+        formDataToSend.append("phone", emailForm.phone);
+    
+        let isImageUpdated = false;
+        if (emailForm.userImage instanceof File) {
+            formDataToSend.append("userImage", emailForm.userImage);
+            isImageUpdated = true;
         }
-
+    
         try {
-            await axios.put(`/api/update-user/${userId}`, formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
+            const response = await fetch(`http://localhost:5000/api/Login/update-user/${userId}`, {
+                method: "PUT",
+                body: formDataToSend,
             });
-            toast.success("Profile updated successfully!");
-        } catch (err) {
-            console.error("Update error:", err);
-            toast.error("Failed to update profile.");
+    
+            const result = await response.json();
+            console.log("Response from backend:", result);
+    
+            if (response.ok) {
+                // Show success message using SweetAlert
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Profile updated successfully!',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
+    
+                // Update form state with returned values
+                const updatedUser = result.user || {};
+                
+                // Update local storage with new user data
+                if (localStorage.getItem("admin")) {
+                    const currentUserData = JSON.parse(localStorage.getItem("admin"));
+                    const updatedUserData = {
+                        ...currentUserData,
+                        fullname: updatedUser.fullname || emailForm.fullname,
+                        lastName: updatedUser.lastName || emailForm.lastName,
+                        email: updatedUser.email || emailForm.email,
+                        phone: updatedUser.phone || emailForm.phone,
+                        userImage: updatedUser.userImage || (
+                            typeof emailForm.userImage === 'string' 
+                                ? emailForm.userImage.split('/').pop() 
+                                : null
+                        )
+                    };
+                    localStorage.setItem("admin", JSON.stringify(updatedUserData));
+                }
+                
+                // Refresh user data
+                if (userId) {
+                    fetchUserData(userId);
+                }
+                
+                // If image was updated, show additional message
+                if (isImageUpdated && updatedUser.userImage) {
+                    setTimeout(() => {
+                        Swal.fire({
+                            title: 'Info',
+                            text: 'Profile picture updated.',
+                            icon: 'info',
+                            confirmButtonText: 'OK'
+                        });
+                    }, 1000);
+                }
+            } else {
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Update failed: ' + result.message,
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        } catch (error) {
+            console.error("Update error:", error);
+            Swal.fire({
+                title: 'Error!',
+                text: 'Something went wrong!',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
         }
     };
 
@@ -162,15 +242,61 @@ useEffect(() => {
         }
 
         try {
-            await axios.put(`/api/change-password/${userId}`, {
+            // Use the format expected by your backend API
+            const formData = {
                 currentPassword: passwordForm.currentPassword,
-                newPassword: passwordForm.newPassword,
+                newPassword: passwordForm.newPassword
+            };
+
+            const response = await fetch(`http://localhost:5000/api/Login/change-password/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
             });
-            toast.success("Password updated successfully!");
-            setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-        } catch (err) {
-            console.error("Password update error:", err);
-            toast.error(err.response?.data?.message || "Failed to update password.");
+
+            const result = await response.json();
+
+            if (response.ok) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Password updated successfully!',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
+                
+                // Clear form fields
+                setPasswordForm({
+                    currentPassword: "",
+                    newPassword: "",
+                    confirmPassword: ""
+                });
+            } else {
+                // If server returns an error
+                Swal.fire({
+                    title: 'Error!',
+                    text: result.message || 'Failed to update password',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                
+                // If the error is about incorrect password
+                if (result.message && result.message.toLowerCase().includes('incorrect')) {
+                    setErrors(prev => ({
+                        ...prev,
+                        currentPassword: "Current password is incorrect"
+                    }));
+                }
+            }
+        } catch (error) {
+            console.error("Password update error:", error);
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to connect to the server. Please try again.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
         }
     };
 
@@ -208,6 +334,16 @@ useEffect(() => {
                         </div>
                         <div className="mb-3">
                             <label>Profile Picture</label>
+                            {emailForm.userImage && (
+                                <div>
+                                    <img
+                                        src={typeof emailForm.userImage === 'string' ? emailForm.userImage : URL.createObjectURL(emailForm.userImage)}
+                                        alt="Profile"
+                                        className="img-fluid mb-3"
+                                        style={{ width: "150px", height: "150px", objectFit: "cover" }}
+                                    />
+                                </div>
+                            )}
                             <input type="file" className="form-control" name="userImage" onChange={handleEmailChange} accept="image/*" />
                             {errors.userImage && <p className="text-danger">{errors.userImage}</p>}
                         </div>
@@ -231,11 +367,11 @@ useEffect(() => {
                             {errors.newPassword && <p className="text-danger">{errors.newPassword}</p>}
                         </div>
                         <div className="mb-3">
-                            <label>Confirm New Password</label>
+                            <label>Confirm Password</label>
                             <input type="password" className="form-control" name="confirmPassword" value={passwordForm.confirmPassword} onChange={handlePasswordChange} />
                             {errors.confirmPassword && <p className="text-danger">{errors.confirmPassword}</p>}
                         </div>
-                        <button type="submit" className="btn btn-primary">Change Password</button>
+                        <button type="submit" className="btn btn-primary">Update Password</button>
                     </form>
                 </div>
             </div>
