@@ -2,10 +2,32 @@ import React, { useState,useEffect  } from 'react'
 import { Link } from 'react-router-dom'
 const Header = ({toggleSidebar}) => {
     
+  
   //const [search, setSearch] = useState("");
+  const [user, setUser] = useState(null);
 
-  const user = JSON.parse(localStorage.getItem("admin"));
-  console.log("admin1:", user);
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userData = urlParams.get('userData');
+    
+    if (userData) {
+      const user = JSON.parse(decodeURIComponent(userData));
+      setUser(user);
+      localStorage.setItem("admin", JSON.stringify(user)); // Keep key consistent
+    }
+  }, []);
+  
+  useEffect(() => {
+    const admin = localStorage.getItem("admin");
+    if (!admin) {
+      window.location.replace("http://localhost:5173/Login");
+    }
+  }, []);
+  
+  const handleLogout = () => {
+    localStorage.removeItem("admin");
+    window.location.replace("http://localhost:5173/Login");
+  };
   
   return (
     <nav className="sb-topnav navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: "#001F3F" }}>
@@ -61,9 +83,16 @@ const Header = ({toggleSidebar}) => {
                 </Link>
               </li>
               <li>
-                <Link className="dropdown-item" to="/login">
-                  Logout
-                </Link>
+              <Link 
+  className="dropdown-item" 
+  to="#" 
+  onClick={(e) => {
+    e.preventDefault();
+    handleLogout();
+  }}
+>
+  Logout
+</Link>
               </li>
             </ul>
           </li>

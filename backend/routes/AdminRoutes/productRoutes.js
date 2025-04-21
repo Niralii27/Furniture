@@ -113,4 +113,14 @@ router.get('/get-all', async (req, res) => {
   }
 });
 
+// Route to fetch total products count
+router.get("/total-products-count", async (req, res) => {
+  try {
+    const totalProducts = await Product.countDocuments();  // Counting the products in the Product collection
+    res.status(200).json({ totalProducts });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch total products count" });
+  }
+});
+
 module.exports = router;

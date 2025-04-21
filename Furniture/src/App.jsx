@@ -20,6 +20,8 @@ import Checkout from './assets/Components/User/Checkout'
 import Address from './assets/Components/User/Address'
 import Login from './assets/Components/User/Login'
 import Review from './assets/Components/User/Review'
+import ForgotPassword from './assets/Components/User/ForgotPassword'
+import ResetPassword from './assets/Components/User/ResetPassword'
 
 function App() {
   //const [count, setCount] = useState(0)
@@ -44,6 +46,9 @@ function App() {
       <Route exact path="/Address" element={<Address />} />
       <Route exact path="/Login" element={<Login />} />
       <Route exact path="/Review/:id" element={<Review />} />
+      <Route exact path="/ForgotPassword" element={<ForgotPassword/>} />
+      <Route exact path="/ResetPassword/:token" element={<ResetPassword/>}/>
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
 
     </Routes>
     <br></br>

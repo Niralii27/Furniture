@@ -252,7 +252,7 @@ const getCategoryNameById = (categoryId) => {
           </div>
 
           {/* Price */}
-          <h4>₹{product.costPrice}</h4>
+          <h4>₹{product.costPrice * quantity}</h4> {/* Total cost updates as quantity changes */}
 
           {/* Quantity */}
           <p className="mb-1">Quantity</p>

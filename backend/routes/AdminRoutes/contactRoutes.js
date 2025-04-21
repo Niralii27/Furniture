@@ -86,4 +86,35 @@ router.put("/update-contact/:id", async (req, res) => {
   }
 });
 
+// Optional: Update contact (rarely needed for contact forms)
+router.put("/update-contact/:id", async (req, res) => {
+  try {
+    const { name, email, phone, subject, message } = req.body;
+
+    const updatedContact = await Contact.findByIdAndUpdate(
+      req.params.id,
+      { name, email, phone, subject, message },
+      { new: true }
+    );
+
+    if (!updatedContact) return res.status(404).json({ error: "Contact not found" });
+
+    res.status(200).json({ message: "Contact updated", contact: updatedContact });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+// Route to fetch total contacts count on dashboard
+router.get("/total-contacts-count", async (req, res) => {
+  try {
+    const totalContacts = await Contact.countDocuments();  // Counting the contacts in the Contact collection
+    res.status(200).json({ totalContacts });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch total contacts count" });
+  }
+});
+
+
 module.exports = router;

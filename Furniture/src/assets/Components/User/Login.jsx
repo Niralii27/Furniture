@@ -209,10 +209,13 @@ function Login() {
 
       //  setStatusMessage(data.message);
       //  setStatusType(data.status);
-      if (data.user.role === "admin") {
+      // if (data.user.role === "admin") {
        
-       window.location.href = "http://localhost:5174/admin";
-
+      //  window.location.href = "http://localhost:5174/admin";
+      if (data.user.role === "admin") {
+        const encodedUser = encodeURIComponent(JSON.stringify(data.user));
+        window.location.href = `http://localhost:5174/admin?userData=${encodedUser}`;
+      
       } else {
         navigate("/home");
         window.location.reload();
@@ -303,9 +306,17 @@ function Login() {
                 <div className="error-message">{loginErrors.password}</div>
               )}
             </div>
-            <button type="submit" className="btn light-brown-btn">
-              Login
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <button type="submit" className="btn light-brown-btn">
+                Login
+              </button>
+              <p className="switch-text" style={{ marginLeft: '10px', cursor: 'pointer',color:"blue" }}
+               onClick={() => navigate('/ForgotPassword')}
+               >
+                ForgotPassword
+              </p>
+            </div>
+
             <p className="switch-text">
               Don't have an account?{" "}
               <span className="toggle-form" onClick={toggleForm}>
@@ -379,7 +390,7 @@ function Login() {
               <span className="input-icon">🔒</span>
               {signupErrors.confirmPassword && (
                 <div className="error-message">
-                  {signupErrors.confirmPassword}
+                  {/* {signupErrors.confirmPassword} */}
                 </div>
               )}
             </div>

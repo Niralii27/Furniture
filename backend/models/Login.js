@@ -10,6 +10,8 @@ const UserSchema = new mongoose.Schema({
   token: { type: String, default: null, required: false },
   userImage: { type: String, required: false },        // User_Image (optional)
   createdAt: { type: Date, default: Date.now },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
 });
 
 
