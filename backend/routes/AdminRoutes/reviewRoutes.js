@@ -69,6 +69,25 @@ router.get("/view-review/:id", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// Get all reviews for a product
+router.get("/reviews/product/:productId", async (req, res) => {
+  try {
+    const reviews = await Review.find({ product: req.params.productId });
+
+    if (!reviews || reviews.length === 0) {
+      return res.status(200).json({ averageRating: 0, totalReviews: 0 });
+    }
+
+    const totalReviews = reviews.length;
+    const sumRatings = reviews.reduce((sum, r) => sum + r.rating, 0);
+    const averageRating = sumRatings / totalReviews;
+
+    res.status(200).json({ averageRating, totalReviews });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // Update review
 router.put("/update-review/:id", async (req, res) => {

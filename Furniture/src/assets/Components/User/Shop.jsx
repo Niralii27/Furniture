@@ -142,6 +142,29 @@ const getCategoryNameById = (categoryId) => {
   };
   
   
+  //for rating
+  const [ratings, setRatings] = useState({});
+  const fetchRatings = async () => {
+    try {
+      const allRatings = {};
+      for (const product of currentProducts) {
+        const res = await axios.get(`http://localhost:5000/api/Review/reviews/product/${product._id}`);
+        allRatings[product._id] = {
+          rating: res.data.averageRating,
+          totalReviews: res.data.totalReviews,
+        };
+      }
+      setRatings(allRatings);
+    } catch (error) {
+      console.error("Error fetching ratings:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (currentProducts.length > 0) {
+      fetchRatings();
+    }
+  }, [currentProducts]);
   
   
   
@@ -294,11 +317,11 @@ const getCategoryNameById = (categoryId) => {
                 </div>
                 <Link to="/Wishlist">
                 <button
-  className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn"
-  onClick={() => handleWishlistToggle(product._id)}
->
-  <i className={`bi ${isProductWishlisted(product._id) ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
-</button>
+                  className="position-absolute top-0 end-0 btn m-2 p-1 rounded-circle bg-light wishlist-btn"
+                  onClick={() => handleWishlistToggle(product._id)}
+                >
+                  <i className={`bi ${isProductWishlisted(product._id) ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
+                </button>
 
 
                 </Link>
@@ -313,14 +336,22 @@ const getCategoryNameById = (categoryId) => {
                     <p className="text-muted mb-1">{getCategoryNameById(product.category) || "Category"}</p>
                     <h5 className="card-title">{product.name}</h5>
                     <div className="d-flex align-items-center">
-                      <span className="star-rating">
-                        <i className="bi bi-star-fill"></i>
-                        <i className="bi bi-star-fill"></i>
-                        <i className="bi bi-star-fill"></i>
-                        <i className="bi bi-star-fill"></i>
-                        <i className="bi bi-star-half"></i>
-                      </span>
-                      <span className="ms-1 text-muted">(6)</span>
+                      
+                    <span className="star-rating">
+      {Array.from({ length: 5 }, (_, i) => {
+        const rating = ratings[product._id]?.rating || 0;
+        if (i + 1 <= Math.floor(rating)) {
+          return <i key={i} className="bi bi-star-fill"></i>;
+        } else if (i < rating) {
+          return <i key={i} className="bi bi-star-half"></i>;
+        } else {
+          return <i key={i} className="bi bi-star"></i>;
+        }
+      })}
+    </span>
+    <span className="ms-1 text-muted">
+      ({ratings[product._id]?.totalReviews || 0})
+    </span>
                     </div>
                   </div>
 
