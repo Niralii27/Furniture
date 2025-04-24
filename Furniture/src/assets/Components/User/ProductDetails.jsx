@@ -127,6 +127,32 @@ const getCategoryNameById = (categoryId) => {
           }
         };
 
+
+//for rating
+ 
+const [ratings, setRatings] = useState({});
+const fetchRatings = async () => {
+  try {
+    const allRatings = {};
+    for (const product of currentProducts) {
+      const res = await axios.get(`http://localhost:5000/api/Review/reviews/product/${product._id}`);
+      allRatings[product._id] = {
+        rating: res.data.averageRating,
+        totalReviews: res.data.totalReviews,
+      };
+    }
+    setRatings(allRatings);
+  } catch (error) {
+    console.error("Error fetching ratings:", error);
+  }
+};
+
+useEffect(() => {
+  if (currentProducts.length > 0) {
+    fetchRatings();
+  }
+}, [currentProducts]);
+
  //WishList 
         
         const [wishlist, setWishlist] = useState(() => {
@@ -218,7 +244,9 @@ const getCategoryNameById = (categoryId) => {
 
   if (!product) return <div className="container pt-5">Loading...</div>;
 
-
+  
+ 
+ 
 
    return (
     <div className="container mt-4 mb-5 pt-5">
@@ -246,10 +274,23 @@ const getCategoryNameById = (categoryId) => {
           <h3>{product.name}</h3>
           <p className="text-muted">{product.description}</p>
 
-          {/* Rating */}
+        {/* Rating */}
           <div className="mb-2">
-            ⭐⭐⭐⭐⭐ <span className="text-muted">(8 Reviews)</span>
+            <span className="star-rating">
+              {Array.from({ length: 5 }, (_, i) => {
+                const rating = ratings[product._id]?.rating || 0; // Get the rating for the product
+                if (i + 1 <= Math.floor(rating)) {
+                  return <i key={i} className="bi bi-star-fill"></i>; // Filled star
+                } else if (i < rating) {
+                  return <i key={i} className="bi bi-star-half"></i>; // Half star
+                } else {
+                  return <i key={i} className="bi bi-star"></i>; // Empty star
+                }
+              })}
+            </span>
+            <span className="text-muted">({ratings[product._id]?.totalReviews || 0} Reviews)</span>
           </div>
+
 
           {/* Price */}
           <h4>₹{product.costPrice * quantity}</h4> {/* Total cost updates as quantity changes */}
@@ -354,14 +395,21 @@ const getCategoryNameById = (categoryId) => {
                                    <p className="text-muted mb-1">{getCategoryNameById(product.category) || "Category"}</p>
                                    <h5 className="card-title">{product.name}</h5>
                                    <div className="d-flex align-items-center">
-                                     <span className="star-rating">
-                                       <i className="bi bi-star-fill"></i>
-                                       <i className="bi bi-star-fill"></i>
-                                       <i className="bi bi-star-fill"></i>
-                                       <i className="bi bi-star-fill"></i>
-                                       <i className="bi bi-star-half"></i>
-                                     </span>
-                                     <span className="ms-1 text-muted">(6)</span>
+                                   <span className="star-rating">
+      {Array.from({ length: 5 }, (_, i) => {
+        const rating = ratings[product._id]?.rating || 0;
+        if (i + 1 <= Math.floor(rating)) {
+          return <i key={i} className="bi bi-star-fill"></i>;
+        } else if (i < rating) {
+          return <i key={i} className="bi bi-star-half"></i>;
+        } else {
+          return <i key={i} className="bi bi-star"></i>;
+        }
+      })}
+    </span>
+    <span className="ms-1 text-muted">
+      ({ratings[product._id]?.totalReviews || 0})
+    </span>
                                    </div>
                                  </div>
                

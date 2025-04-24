@@ -166,8 +166,52 @@ const getCategoryNameById = (categoryId) => {
     }
   }, [currentProducts]);
   
-  
-  
+  //Filter dynamic
+
+  const [selectedRating, setSelectedRating] = useState(null);
+const [selectedPriceRange, setSelectedPriceRange] = useState(null);
+const [selectedDiscountRange, setSelectedDiscountRange] = useState(null);
+const [selectedCategory, setSelectedCategory] = useState(null);
+
+const filteredProducts = products.filter((product) => {
+  // ⭐ Rating filter (assuming you have ratings[product._id])
+  if (selectedRating && (!ratings[product._id] || ratings[product._id].rating < selectedRating)) {
+    return false;
+  }
+
+  // 💰 Price filter
+  if (selectedPriceRange) {
+    const price = product.costPrice;
+    const [min, max] = selectedPriceRange;
+    if (price < min || price > max) {
+      return false;
+    }
+  }
+
+  // 🔖 Discount filter
+  if (selectedDiscountRange) {
+    const discount = product.discount || 0;
+    const [min, max] = selectedDiscountRange;
+    if (discount < min || discount > max) {
+      return false;
+    }
+  }
+
+  // 📦 Category filter
+  if (selectedCategory && getCategoryNameById(product.categoryId) !== selectedCategory) {
+    return false;
+  }
+
+  return true;
+});
+
+const clearFilters = () => {
+  setSelectedRating(null);
+  setSelectedPriceRange(null);
+  setSelectedDiscountRange(null);
+  setSelectedCategory(null);
+};
+
 
   return (
     <div className="main-container">
@@ -196,111 +240,148 @@ const getCategoryNameById = (categoryId) => {
       <button className="btn light-brown-btn me-2" data-bs-toggle="collapse" data-bs-target="#filterCard">
         <i className="bi bi-funnel-fill me-1"></i> Filter
       </button>
-      <button className="btn light-brown-btn me-2" data-bs-toggle="collapse" data-bs-target="#filterCard">
-        <i className="bi bi-funnel-fill me-1"></i> Clear Filter
-      </button>
+      <button className="btn light-brown-btn me-2" onClick={clearFilters}>
+  <i className="bi bi-x-circle me-1"></i> Clear Filter
+</button>
+
      
     </div>
   </div>
 
   <div id="filterCard" className="border p-4 collapse">
-    <div className="row">
-      <div className="col-md-4">
-        <h5>Customer Ratings</h5>
-        <div className="form-check mb-2">
-          <input className="form-check-input" type="radio" name="ratings" id="rating4" />
-          <label className="form-check-label" htmlFor="rating4">
-            4 <i className="bi bi-star-fill text-warning"></i> and above
-          </label>
-        </div>
-        <div className="form-check mb-2">
-          <input className="form-check-input" type="radio" name="ratings" id="rating3" />
-          <label className="form-check-label" htmlFor="rating3">
-            3 <i className="bi bi-star-fill text-warning"></i> and above
-          </label>
-        </div>
-        <div className="form-check mb-2">
-          <input className="form-check-input" type="radio" name="ratings" id="rating2" />
-          <label className="form-check-label" htmlFor="rating2">
-            2 <i className="bi bi-star-fill text-warning"></i> and above
-          </label>
-        </div>
-        <div className="form-check mb-2">
-          <input className="form-check-input" type="radio" name="ratings" id="rating1" />
-          <label className="form-check-label" htmlFor="rating1">
-            1 <i className="bi bi-star-fill text-warning"></i> and above
-          </label>
-        </div>
+  <div className="row">
+    {/* Ratings */}
+    <div className="col-md-3">
+      <h5>Customer Ratings</h5>
+      <div className="form-check mb-2">
+      <input className="form-check-input" type="radio" name="ratings" id="rating4"
+  onChange={() => setSelectedRating(4)} />
+        <label className="form-check-label" htmlFor="rating4">
+          4 <i className="bi bi-star-fill text-warning"></i> and above
+        </label>
       </div>
-
-      <div className="col-md-4">
-        <h5>Price</h5>
-        <div className="form-check mb-2">
-          <input className="form-check-input" type="radio" name="price" id="price1" />
-          <label className="form-check-label" htmlFor="price1">
-            Less than Rs 50
-          </label>
-        </div>
-        <div className="form-check mb-2">
-          <input className="form-check-input" type="radio" name="price" id="price2" />
-          <label className="form-check-label" htmlFor="price2">
-            Rs 51 to 100
-          </label>
-        </div>
-        <div className="form-check mb-2">
-          <input className="form-check-input" type="radio" name="price" id="price3" />
-          <label className="form-check-label" htmlFor="price3">
-            Rs 101 to 200
-          </label>
-        </div>
-        <div className="form-check mb-2">
-          <input className="form-check-input" type="radio" name="price" id="price4" />
-          <label className="form-check-label" htmlFor="price4">
-            Rs 201 to 500
-          </label>
-        </div>
-        <div className="form-check mb-2">
-          <input className="form-check-input" type="radio" name="price" id="price5" />
-          <label className="form-check-label" htmlFor="price5">
-            More than Rs 500
-          </label>
-        </div>
+      <div className="form-check mb-2">
+        <input className="form-check-input" type="radio" name="ratings" id="rating3" onChange={() => setSelectedRating(3)} />
+        <label className="form-check-label" htmlFor="rating3">
+          3 <i className="bi bi-star-fill text-warning"></i> and above
+        </label>
       </div>
-
-      <div className="col-md-4">
-        <h5>Discount</h5>
-        <div className="form-check mb-2">
-          <input className="form-check-input" type="radio" name="discount" id="discount1" />
-          <label className="form-check-label" htmlFor="discount1">
-            Less than 5%
-          </label>
-        </div>
-        <div className="form-check mb-2">
-          <input className="form-check-input" type="radio" name="discount" id="discount2" />
-          <label className="form-check-label" htmlFor="discount2">
-            5% to 15%
-          </label>
-        </div>
-        <div className="form-check mb-2">
-          <input className="form-check-input" type="radio" name="discount" id="discount3" />
-          <label className="form-check-label" htmlFor="discount3">
-            15% to 25%
-          </label>
-        </div>
-        <div className="form-check mb-2">
-          <input className="form-check-input" type="radio" name="discount" id="discount4" />
-          <label className="form-check-label" htmlFor="discount4">
-            More than 25%
-          </label>
-        </div>
-
-        <div className="text-end mt-4">
-          <button className="btn light-brown-btn">Apply</button>
-        </div>
+      <div className="form-check mb-2">
+        <input className="form-check-input" type="radio" name="ratings" id="rating2" onChange={() => setSelectedRating(2)} />
+        <label className="form-check-label" htmlFor="rating2">
+          2 <i className="bi bi-star-fill text-warning"></i> and above
+        </label>
+      </div>
+      <div className="form-check mb-2">
+        <input className="form-check-input" type="radio" name="ratings" id="rating1" onChange={() => setSelectedRating(1)} />
+        <label className="form-check-label" htmlFor="rating1">
+          1 <i className="bi bi-star-fill text-warning"></i> and above
+        </label>
       </div>
     </div>
-    
+
+    {/* Price */}
+    <div className="col-md-3">
+      <h5>Price</h5>
+      <div className="form-check mb-2">
+      <input className="form-check-input" type="radio" name="price" id="price1"
+  onChange={() => setSelectedPriceRange([0, 50])} />
+        <label className="form-check-label" htmlFor="price1">
+          Less than Rs 50
+        </label>
+      </div>
+      <div className="form-check mb-2">
+        <input className="form-check-input" type="radio" name="price" id="price2"  onChange={() => setSelectedPriceRange([51, 100])} />
+        <label className="form-check-label" htmlFor="price2">
+          Rs 51 to 100
+        </label>
+      </div>
+      <div className="form-check mb-2">
+        <input className="form-check-input" type="radio" name="price" id="price3"  onChange={() => setSelectedPriceRange([101, 200])} />
+        <label className="form-check-label" htmlFor="price3">
+          Rs 101 to 200
+        </label>
+      </div>
+      <div className="form-check mb-2">
+        <input className="form-check-input" type="radio" name="price" id="price4"  onChange={() => setSelectedPriceRange([201, 500])} />
+        <label className="form-check-label" htmlFor="price4">
+          Rs 201 to 500
+        </label>
+      </div>
+      <div className="form-check mb-2">
+        <input className="form-check-input" type="radio" name="price" id="price5"  onChange={() => setSelectedPriceRange([500, 10000])} />
+        <label className="form-check-label" htmlFor="price5">
+          More than Rs 500
+        </label>
+      </div>
+    </div>
+
+    {/* Discount */}
+    <div className="col-md-3">
+      <h5>Discount</h5>
+      <div className="form-check mb-2">
+      <input className="form-check-input" type="radio" name="discount" id="discount2"
+  onChange={() => setSelectedDiscountRange([5, 15])} />
+        <label className="form-check-label" htmlFor="discount1">
+          Less than 5%
+        </label>
+      </div>
+      <div className="form-check mb-2">
+        <input className="form-check-input" type="radio" name="discount" id="discount2" />
+        <label className="form-check-label" htmlFor="discount2">
+          5% to 15%
+        </label>
+      </div>
+      <div className="form-check mb-2">
+        <input className="form-check-input" type="radio" name="discount" id="discount3" />
+        <label className="form-check-label" htmlFor="discount3">
+          15% to 25%
+        </label>
+      </div>
+      <div className="form-check mb-2">
+        <input className="form-check-input" type="radio" name="discount" id="discount4" />
+        <label className="form-check-label" htmlFor="discount4">
+          More than 25%
+        </label>
+      </div>
+    </div>
+
+    {/* Category */}
+    <div className="col-md-3">
+      <h5>Category</h5>
+      <div className="form-check mb-2">
+      <input className="form-check-input" type="radio" name="category" id="category1"
+       onChange={() => setSelectedCategory("Table")} />
+        <label className="form-check-label" htmlFor="category1">
+         Table
+        </label>
+      </div>
+      <div className="form-check mb-2">
+        <input className="form-check-input" type="radio" name="category" id="category2" onChange={() => setSelectedCategory("Chair")}  />
+        <label className="form-check-label" htmlFor="category2">
+          Chair
+        </label>
+      </div>
+      <div className="form-check mb-2">
+        <input className="form-check-input" type="radio" name="category" id="category3" onChange={() => setSelectedCategory("Cupboard")}  />
+        <label className="form-check-label" htmlFor="category3">
+          Cupboard
+        </label>
+      </div>
+      <div className="form-check mb-2">
+        <input className="form-check-input" type="radio" name="category" id="category4" onChange={() => setSelectedCategory("Cup")} />
+        <label className="form-check-label" htmlFor="category4">
+          Cup
+        </label>
+      </div>
+    </div>
   </div>
+
+  <div className="text-end mt-4">
+    <button className="btn light-brown-btn">Apply</button>
+  </div>
+</div>
+
   
 </div>
  <div className="container my-5">
@@ -309,7 +390,7 @@ const getCategoryNameById = (categoryId) => {
   {loading ? (
               <p>Loading...</p>
             ) : (
-              currentProducts.map((product, index) => (
+              filteredProducts.map((product, index) => (
                 <div className="col" key={index}>
               <div className="card h-100 border-light position-relative product-card">
                 <div className="position-absolute top-0 start-0 m-2">
@@ -338,20 +419,20 @@ const getCategoryNameById = (categoryId) => {
                     <div className="d-flex align-items-center">
                       
                     <span className="star-rating">
-      {Array.from({ length: 5 }, (_, i) => {
-        const rating = ratings[product._id]?.rating || 0;
-        if (i + 1 <= Math.floor(rating)) {
-          return <i key={i} className="bi bi-star-fill"></i>;
-        } else if (i < rating) {
-          return <i key={i} className="bi bi-star-half"></i>;
-        } else {
-          return <i key={i} className="bi bi-star"></i>;
-        }
-      })}
-    </span>
-    <span className="ms-1 text-muted">
-      ({ratings[product._id]?.totalReviews || 0})
-    </span>
+                        {Array.from({ length: 5 }, (_, i) => {
+                          const rating = ratings[product._id]?.rating || 0;
+                          if (i + 1 <= Math.floor(rating)) {
+                            return <i key={i} className="bi bi-star-fill"></i>;
+                          } else if (i < rating) {
+                            return <i key={i} className="bi bi-star-half"></i>;
+                          } else {
+                            return <i key={i} className="bi bi-star"></i>;
+                          }
+                        })}
+                      </span>
+                    <span className="ms-1 text-muted">
+                        ({ratings[product._id]?.totalReviews || 0})
+                    </span>
                     </div>
                   </div>
 

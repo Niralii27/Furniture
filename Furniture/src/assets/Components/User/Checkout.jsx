@@ -65,6 +65,78 @@ function Checkout() {
     setPaymentError('');
   };
 
+  // const handlePlaceOrder = async () => {
+  //   if (!selectedAddress) {
+  //     setAddressError("Please select a shipping address.");
+  //     return;
+  //   }
+  //   setAddressError("");
+  
+  //   if (!paymentMethod) {
+  //     setPaymentError("Please select a payment method.");
+  //     return;
+  //   }
+  
+  //   const user = JSON.parse(localStorage.getItem("user"));
+  //   const address = userAddresses.find((a) => a.id === selectedAddress);
+  //   const subtotal = cartItems.reduce((acc, item) => acc + item.costPrice * item.quantity, 0);
+  //   const shipping = 50;
+  //   const total = subtotal + shipping;
+  
+  //   const orderData = {
+  //     userId: user.id,
+  //     orderDate: new Date(),
+  //     products: cartItems.map((item) => ({
+  //       productId: item.productId._id,
+  //       quantity: item.quantity,
+  //       costPrice: item.costPrice,
+  //       productImage: item.productImage,
+  //     })),
+  //     firstName: address.firstName,
+  //     lastName: address.lastName,
+  //     address: `${address.streetAddress}${address.apartment ? `, ${address.apartment}` : ''}`,
+  //     city: address.city,
+  //     state: address.state,
+  //     pinCode: address.pinCode,
+  //     phone: address.phone,
+  //     shippingCharge: shipping,
+  //     total: total,
+  //     payment_mode: paymentMethod,
+  //     status: "Pending",
+  //   };
+  
+  //   try {
+  //     console.log("Sending orderData", orderData); // 👈 Add this before axios.post
+
+  //     // 👇 Insert into Order table
+  //     await axios.post("http://localhost:5000/api/Order/add-order", orderData);
+  
+  //     // ✅ Thank you popup
+  //     await Swal.fire({
+  //       title: '🎉 Thank You!',
+  //       text: 'Your order has been placed successfully!',
+  //       icon: 'success',
+  //       confirmButtonText: 'OK',
+  //       confirmButtonColor: '#CD853F',
+  //     });
+  
+  //     // 🛒 Navigate back to shop
+  //     navigate('/Shop', { state: { cartItems } });
+  
+  //     // 🧹 Clear cart
+  //     await Promise.all(
+  //       cartItems.map((item) =>
+  //         axios.delete(`http://localhost:5000/api/Cart/remove/${item._id}`)
+  //       )
+  //     );
+  //     setCartItems([]);
+  //   } catch (error) {
+  //     console.error("Error placing order:", error.response?.data || error.message);
+  //     alert("Something went wrong!");
+  //   }
+  // };
+  
+  
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
       setAddressError("Please select a shipping address.");
@@ -105,13 +177,46 @@ function Checkout() {
       status: "Pending",
     };
   
-    try {
-      console.log("Sending orderData", orderData); // 👈 Add this before axios.post
+    if (paymentMethod === 'cashOnDelivery') {
+      // COD logic stays the same
+      await placeOrder(orderData);
+    } else {
+      // Razorpay Integration
+      const options = {
+        key: "rzp_test_yCgrsfXSuM7SxL", // Replace with your Razorpay key
+        amount: total * 100, // Amount in paise
+        currency: "INR",
+        name: "Car Service",
+        description: "Order Payment",
+        handler: function (response) {
+          orderData.razorpayPaymentId = response.razorpay_payment_id;
+          orderData.status = "Pending"; // or another valid enum from your backend
+        
+          placeOrder(orderData).catch((error) => {
+            console.error("Order placement failed after Razorpay:", error);
+            Swal.fire("Error", "Payment was successful but order failed!", "error");
+          });
+        },
+        
+        prefill: {
+          name: `${address.firstName} ${address.lastName}`,
+          email: user.email,
+          contact: address.phone
+        },
+        theme: {
+          color: "#CD853F"
+        }
+      };
+  
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    }
+  };
 
-      // 👇 Insert into Order table
+  const placeOrder = async (orderData) => {
+    try {
       await axios.post("http://localhost:5000/api/Order/add-order", orderData);
   
-      // ✅ Thank you popup
       await Swal.fire({
         title: '🎉 Thank You!',
         text: 'Your order has been placed successfully!',
@@ -120,10 +225,8 @@ function Checkout() {
         confirmButtonColor: '#CD853F',
       });
   
-      // 🛒 Navigate back to shop
       navigate('/Shop', { state: { cartItems } });
   
-      // 🧹 Clear cart
       await Promise.all(
         cartItems.map((item) =>
           axios.delete(`http://localhost:5000/api/Cart/remove/${item._id}`)
@@ -136,8 +239,6 @@ function Checkout() {
     }
   };
   
-  
- 
 
   
 
@@ -229,6 +330,7 @@ function Checkout() {
         </div>
       </div>
     </div>
+    
   );
 }
 
