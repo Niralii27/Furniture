@@ -81,11 +81,34 @@ function Cart() {
 
   //checkout page
 
+  // const handleCheckout = () => {
+  //   // Save cart items to localStorage
+  //   localStorage.setItem('checkoutCart', JSON.stringify(cartItems));
+  //   // Redirect to checkout page
+  //   window.location.href = '/Checkout'; // or use navigate('/Checkout') if using React Router
+  // };
   const handleCheckout = () => {
-    // Save cart items to localStorage
-    localStorage.setItem('checkoutCart', JSON.stringify(cartItems));
-    // Redirect to checkout page
-    window.location.href = '/Checkout'; // or use navigate('/Checkout') if using React Router
+    // Calculate the subtotal (before any discount)
+    const subtotal = cartItems.reduce((acc, item) => {
+      return acc + (item.productId?.costPrice || 0) * item.quantity;
+    }, 0);
+  
+    // Calculate the final total (after applying discount, if any)
+    const finalTotal = discountedTotal !== null ? discountedTotal : subtotal;
+  
+    // Prepare the checkout data
+    const checkoutData = {
+      cartItems,      // Pass the cart items
+      subtotal,       // Pass the subtotal (before discount)
+      discountAmount, // Pass the discount applied
+      finalTotal,     // Pass the final total (after discount)
+    };
+  
+    // Save the checkout data in localStorage
+    localStorage.setItem('checkoutData', JSON.stringify(checkoutData));
+  
+    // Redirect to the Checkout page
+    navigate('/Checkout'); // Use navigate to redirect
   };
   
   //Offer Code

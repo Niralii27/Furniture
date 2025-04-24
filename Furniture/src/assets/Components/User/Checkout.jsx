@@ -45,16 +45,28 @@ function Checkout() {
     }
   };
   // Fetch cart items from localStorage instead of DB
-  useEffect(() => {
-    const storedCart = localStorage.getItem('checkoutCart');
-    if (storedCart) {
-      setCartItems(JSON.parse(storedCart));
-    }
+  // useEffect(() => {
+  //   const storedCart = localStorage.getItem('checkoutCart');
+  //   if (storedCart) {
+  //     setCartItems(JSON.parse(storedCart));
+  //   }
   
    
-    }, []);
+  //   }, []);
  
-
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [finalTotal, setFinalTotal] = useState(0);
+  useEffect(() => {
+    // Fetch the checkout data from localStorage
+    const storedCheckoutData = localStorage.getItem('checkoutData');
+    if (storedCheckoutData) {
+      const checkoutData = JSON.parse(storedCheckoutData);
+      setCartItems(checkoutData.cartItems);
+      setDiscountAmount(checkoutData.discountAmount);
+      setFinalTotal(checkoutData.finalTotal); // Use the final total here
+    }
+  }, []);
+  
   
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => total + (item.costPrice * item.quantity), 0).toFixed(2);
@@ -186,7 +198,7 @@ function Checkout() {
         key: "rzp_test_yCgrsfXSuM7SxL", // Replace with your Razorpay key
         amount: total * 100, // Amount in paise
         currency: "INR",
-        name: "Car Service",
+        name: "UrbanWood Furniture",
         description: "Order Payment",
         handler: function (response) {
           orderData.razorpayPaymentId = response.razorpay_payment_id;
@@ -295,7 +307,7 @@ function Checkout() {
               <hr />
               <div className="d-flex justify-content-between mb-2">
                 <span>Subtotal:</span>
-                <span>₹{calculateTotal()}</span>
+                <span>₹{finalTotal}</span>
               </div>
               <div className="d-flex justify-content-between mb-2">
                 <span>Shipping:</span>

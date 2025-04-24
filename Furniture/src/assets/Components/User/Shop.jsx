@@ -198,9 +198,7 @@ const filteredProducts = products.filter((product) => {
   }
 
   // 📦 Category filter
-  if (selectedCategory && getCategoryNameById(product.categoryId) !== selectedCategory) {
-    return false;
-  }
+  if (selectedCategory && getCategoryNameById(product.category) !== selectedCategory) return false;
 
   return true;
 });
@@ -321,25 +319,26 @@ const clearFilters = () => {
       <h5>Discount</h5>
       <div className="form-check mb-2">
       <input className="form-check-input" type="radio" name="discount" id="discount2"
-  onChange={() => setSelectedDiscountRange([5, 15])} />
+  onChange={() => setSelectedDiscountRange([0, 5])} />
         <label className="form-check-label" htmlFor="discount1">
           Less than 5%
         </label>
       </div>
       <div className="form-check mb-2">
-        <input className="form-check-input" type="radio" name="discount" id="discount2" />
+        <input className="form-check-input" type="radio" name="discount" id="discount2"   onChange={() => setSelectedDiscountRange([5, 15])} />
+        
         <label className="form-check-label" htmlFor="discount2">
           5% to 15%
         </label>
       </div>
       <div className="form-check mb-2">
-        <input className="form-check-input" type="radio" name="discount" id="discount3" />
+        <input className="form-check-input" type="radio" name="discount" id="discount3"   onChange={() => setSelectedDiscountRange([15, 25])} />
         <label className="form-check-label" htmlFor="discount3">
           15% to 25%
         </label>
       </div>
       <div className="form-check mb-2">
-        <input className="form-check-input" type="radio" name="discount" id="discount4" />
+        <input className="form-check-input" type="radio" name="discount" id="discount4"   onChange={() => setSelectedDiscountRange([25, 50])} />
         <label className="form-check-label" htmlFor="discount4">
           More than 25%
         </label>
@@ -349,43 +348,30 @@ const clearFilters = () => {
     {/* Category */}
     <div className="col-md-3">
       <h5>Category</h5>
-      <div className="form-check mb-2">
-      <input className="form-check-input" type="radio" name="category" id="category1"
-       onChange={() => setSelectedCategory("Table")} />
-        <label className="form-check-label" htmlFor="category1">
-         Table
-        </label>
-      </div>
-      <div className="form-check mb-2">
-        <input className="form-check-input" type="radio" name="category" id="category2" onChange={() => setSelectedCategory("Chair")}  />
-        <label className="form-check-label" htmlFor="category2">
-          Chair
-        </label>
-      </div>
-      <div className="form-check mb-2">
-        <input className="form-check-input" type="radio" name="category" id="category3" onChange={() => setSelectedCategory("Cupboard")}  />
-        <label className="form-check-label" htmlFor="category3">
-          Cupboard
-        </label>
-      </div>
-      <div className="form-check mb-2">
-        <input className="form-check-input" type="radio" name="category" id="category4" onChange={() => setSelectedCategory("Cup")} />
-        <label className="form-check-label" htmlFor="category4">
-          Cup
-        </label>
-      </div>
+      <div className="mb-3">
+                <select className="form-select" onChange={e => setSelectedCategory(e.target.value || null)}>
+                  <option value="">All</option>
+                  {categories.map(cat => (
+                    <option key={cat._id} value={cat.name}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
     </div>
   </div>
 
-  <div className="text-end mt-4">
+  {/* <div className="text-end mt-4">
     <button className="btn light-brown-btn">Apply</button>
-  </div>
+  </div> */}
 </div>
 
   
 </div>
  <div className="container my-5">
-         
+ {filteredProducts.length === 0 ? (
+  <div className="text-center my-4">
+    <h5>No items found for this filter.</h5>
+  </div>
+) : (
   <div className="row row-cols-1 row-cols-sm-2 mt-5 row-cols-md-4 g-4">
   {loading ? (
               <p>Loading...</p>
@@ -475,7 +461,7 @@ const clearFilters = () => {
           ))
         )}
   </div>
-            
+)}    
                      <nav aria-label="Product Pagination">
                         <ul className="pagination justify-content-end mt-4">
                           <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
